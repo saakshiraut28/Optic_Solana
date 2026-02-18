@@ -12,10 +12,7 @@ const SignupModal = ({ isOpen, onClose }: SignupModalProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [form, setForm] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirm: "",
+    walletAddress: "",
   });
   const [submitted, setSubmitted] = useState(false);
 
@@ -25,6 +22,7 @@ const SignupModal = ({ isOpen, onClose }: SignupModalProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Form submitted:", form);
     setSubmitted(true);
   };
 
@@ -75,10 +73,10 @@ const SignupModal = ({ isOpen, onClose }: SignupModalProps) => {
                 id="signup-title"
                 className="text-2xl font-semibold text-gray-900"
               >
-                Create your account
+                Connect your wallet
               </h2>
               <p className="text-sm text-gray-600">
-                Free forever. No credit card required.
+                Join the Network. Verify the Content.
               </p>
             </div>
 
@@ -87,7 +85,7 @@ const SignupModal = ({ isOpen, onClose }: SignupModalProps) => {
               {/* Name */}
               <div className="space-y-1">
                 <label htmlFor="name" className="text-sm font-medium">
-                  Full name
+                  Solana Wallet Address
                 </label>
                 <input
                   id="name"
@@ -95,79 +93,10 @@ const SignupModal = ({ isOpen, onClose }: SignupModalProps) => {
                   type="text"
                   required
                   placeholder="Jane Smith"
-                  value={form.name}
+                  value={form.walletAddress}
                   onChange={handleChange}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black"
                 />
-              </div>
-
-              {/* Email */}
-              <div className="space-y-1">
-                <label htmlFor="email" className="text-sm font-medium">
-                  Email address
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  placeholder="jane@example.com"
-                  value={form.email}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black"
-                />
-              </div>
-
-              {/* Password */}
-              <div className="space-y-1">
-                <label htmlFor="password" className="text-sm font-medium">
-                  Password
-                </label>
-                <div className="relative">
-                  <input
-                    id="password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    required
-                    placeholder="Min. 8 characters"
-                    value={form.password}
-                    onChange={handleChange}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-black"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-3 flex items-center text-gray-500"
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Confirm Password */}
-              <div className="space-y-1">
-                <label htmlFor="confirm" className="text-sm font-medium">
-                  Confirm password
-                </label>
-                <div className="relative">
-                  <input
-                    id="confirm"
-                    name="confirm"
-                    type={showConfirm ? "text" : "password"}
-                    required
-                    placeholder="Repeat password"
-                    value={form.confirm}
-                    onChange={handleChange}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-black"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirm(!showConfirm)}
-                    className="absolute inset-y-0 right-3 flex items-center text-gray-500"
-                  >
-                    {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
               </div>
 
               {/* Submit */}
@@ -190,14 +119,6 @@ const SignupModal = ({ isOpen, onClose }: SignupModalProps) => {
                 .
               </p>
             </form>
-
-            {/* Footer */}
-            <div className="mt-6 text-center text-sm text-gray-600">
-              Already have an account?{" "}
-              <a href="#" className="font-medium underline">
-                Log in
-              </a>
-            </div>
           </>
         )}
       </div>
