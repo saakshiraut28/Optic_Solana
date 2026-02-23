@@ -1,26 +1,12 @@
 /** @format */
 
 import { useState } from "react";
-import { Home, Search, Bell, User, PlusSquare } from "lucide-react";
+import { Home, Search, Bell, User } from "lucide-react";
 import SignupModal from "@/components/SignupModal";
+import PostCard from "@/components/PostCard";
 
 const Index = () => {
   const [open, setOpen] = useState(false);
-
-  const mockPosts = [
-    {
-      id: 1,
-      name: "Saakshi",
-      handle: "@saak",
-      content: "Building something cool with Tapestry 🚀",
-    },
-    {
-      id: 2,
-      name: "Sol Dev",
-      handle: "@soldev",
-      content: "Solana dev ecosystem is evolving fast.",
-    },
-  ];
 
   return (
     <div className="flex w-screen justify-centered min-h-screen bg-gray-50">
@@ -69,9 +55,7 @@ const Index = () => {
           </div>
 
           {/* Posts */}
-          {mockPosts.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
+          <PostCard />
         </main>
 
         {/* RIGHT PANEL */}
@@ -118,78 +102,3 @@ const FollowItem = ({ name, handle }: any) => (
     </button>
   </div>
 );
-
-const PostCard = ({ post }: any) => {
-  const [agreed, setAgreed] = useState<boolean | null>(null);
-  const [showDisagreeForm, setShowDisagreeForm] = useState(false);
-  const [reason, setReason] = useState("");
-
-  const handleAgree = () => {
-    setAgreed(true);
-    setShowDisagreeForm(false);
-  };
-
-  const handleDisagree = () => {
-    setAgreed(false);
-    setShowDisagreeForm(true);
-  };
-
-  const submitReason = () => {
-    console.log("Disagree reason:", reason);
-    setShowDisagreeForm(false);
-  };
-
-  return (
-    <div className="p-4 border-b border-gray-200 hover:bg-gray-50 transition">
-      <div className="font-semibold">{post.name}</div>
-      <div className="text-sm text-gray-500">{post.handle}</div>
-      <p className="mt-2 text-gray-800">{post.content}</p>
-
-      {/* ACTION BUTTONS */}
-      <div className="flex gap-3 mt-4">
-        <button
-          onClick={handleAgree}
-          className={`px-4 py-1 rounded-full text-sm border transition ${
-            agreed === true
-              ? "bg-green-500 text-white border-green-500"
-              : "border-gray-300 hover:bg-green-50 text-white"
-          }`}
-        >
-          👍 Agree
-        </button>
-
-        <button
-          onClick={handleDisagree}
-          className={`px-4 py-1 rounded-full bg-red-500 text-sm border transition ${
-            agreed === false
-              ? "bg-red-500 text-white border-red-500"
-              : "border-gray-300 hover:bg-red-50  text-white"
-          }`}
-        >
-          👎 Disagree
-        </button>
-      </div>
-
-      {/* DISAGREE FORM */}
-      {showDisagreeForm && (
-        <div className="mt-4 bg-gray-100 p-3 rounded-lg">
-          <textarea
-            placeholder="Why do you disagree?"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            className="w-full resize-none outline-none bg-transparent text-sm"
-            rows={2}
-          />
-          <div className="flex justify-end mt-2">
-            <button
-              onClick={submitReason}
-              className="text-sm bg-black text-white px-4 py-1 rounded-full"
-            >
-              Submit
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
