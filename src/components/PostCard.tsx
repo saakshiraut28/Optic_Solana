@@ -2,123 +2,155 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 
-// ─────────────────────────────────────────────
-//  CONFIG — point this to your Express server
-// ─────────────────────────────────────────────
-const api = axios.create({
-  baseURL: "http://localhost:3000/api",
-});
+const api = axios.create({ baseURL: "http://localhost:3000/api" });
 
 // ─────────────────────────────────────────────
 //  TYPES
 // ─────────────────────────────────────────────
-interface Post {
-  id: string;
-  name: string;
-  handle: string;
-  content: string;
-  ownerWalletAddress: string; // needed to send notifications
+interface TapestryPost {
+  authorProfile: {
+    id: string;
+    username: string;
+    image?: string;
+    bio?: string;
+  };
+  content: {
+    id: string;
+    text?: string;
+    proofType?: string;
+    proofUrl?: string;
+    proofMedia?: string;
+    proofCitation?: string;
+    postType?: string;
+    created_at: number;
+  };
+  socialCounts: {
+    likeCount: number;
+    commentCount: number;
+  };
 }
 
-interface PostCardProps {
-  post: Post;
-  currentProfileId: string; 
-  currentWalletAddress: string; 
+interface Disagreement {
+  comment: {
+    id: string;
+    text: string;
+    proofUrl?: string;
+    proofCitation?: string;
+    created_at: number;
+  };
+  author: { id: string; username: string };
+  socialCounts: { likeCount: number };
 }
 
-export default function PostCard({
+interface FeedProps {
+  currentProfileId: string | null; // null = logged out
+  currentWalletAddress: string | null; // null = logged out
+  onAuthRequired: () => void; // open login/signup modal
+  feedType?: "explore" | "home"; // default: explore
+}
+
+function PostCard({
   post,
   currentProfileId,
-  currentWalletAddress,
-}: PostCardProps) {
+  onAuthRequired,
+}: {
+  post: TapestryPost;
+  currentProfileId: string | null;
+  onAuthRequired: () => void;
+}) {
+  const isLoggedIn = !!currentProfileId;
+
   const [agreed, setAgreed] = useState<boolean | null>(null);
   const [showDisagreeForm, setShowDisagreeForm] = useState(false);
+  const [showDisagreements, setShowDisagreements] = useState(false);
   const [reason, setReason] = useState("");
   const [proofUrl, setProofUrl] = useState("");
-  const [agreeCount, setAgreeCount] = useState(0);
+  const [agreeCount, setAgreeCount] = useState(
+    post.socialCounts.likeCount ?? 0,
+  );
+  const [disagreeCount, setDisagreeCount] = useState(
+    post.socialCounts.commentCount ?? 0,
+  );
+  const [disagreements, setDisagreements] = useState<Disagreement[]>([]);
+  const [loadingDisagreements, setLoadingDisagreements] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ── On mount: check if this user already agreed + get agree count ──
+  // Check if logged-in user already agreed
   useEffect(() => {
-    const fetchInitialState = async () => {
-      try {
-        // Check if user has already agreed with this post
-        const [checkRes, countRes] = await Promise.all([
-          api.get("/agree/check", {
-            params: { profileId: currentProfileId, postId: post.id },
-          }),
-          api.get(`/agree/${post.id}/count`),
-        ]);
+    if (!isLoggedIn) return;
+    api
+      .get("/agree/check", {
+        params: { profileId: currentProfileId, postId: post.content.id },
+      })
+      .then((res) => setAgreed(res.data.data?.liked ?? null))
+      .catch(() => setAgreed(null));
+  }, [post.content.id, currentProfileId, isLoggedIn]);
 
-        setAgreed(checkRes.data.data?.liked ?? false);
-        setAgreeCount(countRes.data.data?.count ?? 0);
-      } catch {
-        // If check fails (e.g. not found), default to null — user hasn't reacted yet
-        setAgreed(null);
-      }
-    };
+  const fetchDisagreements = async () => {
+    if (loadingDisagreements) return;
+    setLoadingDisagreements(true);
+    try {
+      const res = await api.get(`/disagree/${post.content.id}`, {
+        params: { page: 1, pageSize: 20 },
+      });
+      setDisagreements(res.data.data?.comments ?? []);
+    } catch {
+      /* silent */
+    } finally {
+      setLoadingDisagreements(false);
+    }
+  };
 
-    fetchInitialState();
-  }, [post.id, currentProfileId]);
+  const toggleDisagreements = () => {
+    if (!showDisagreements && disagreements.length === 0) fetchDisagreements();
+    setShowDisagreements((prev) => !prev);
+  };
 
-  // ─────────────────────────────────────────────
-  //  AGREE
-  // ─────────────────────────────────────────────
+  // AGREE
   const handleAgree = async () => {
+    if (!isLoggedIn) return onAuthRequired();
     if (loading) return;
     setLoading(true);
     setError(null);
-
     try {
       if (agreed === true) {
-        // Already agreed → remove agreement
         await api.delete("/agree", {
-          data: { profileId: currentProfileId, postId: post.id },
+          data: { profileId: currentProfileId, postId: post.content.id },
         });
         setAgreed(null);
         setAgreeCount((c) => Math.max(0, c - 1));
       } else {
-        // Not agreed yet → agree
-        // If they had previously disagreed, the disagree form was a modal
-        // so no extra cleanup needed here (disagrees are separate comments)
         await api.post("/agree", {
           profileId: currentProfileId,
-          postId: post.id,
+          postId: post.content.id,
         });
-
-        // Notify the post owner (fire and forget — don't block UI)
         api
           .post("/notifications/agree", {
-            recipientWalletAddress: post.ownerWalletAddress,
+            recipientWalletAddress: post.authorProfile.id,
             actorProfileId: currentProfileId,
-            postId: post.id,
+            postId: post.content.id,
           })
-          .catch(() => {}); // silent fail — notification is non-critical
-
+          .catch(() => {});
         setAgreed(true);
         setAgreeCount((c) => c + 1);
         setShowDisagreeForm(false);
       }
-    } catch (err: any) {
+    } catch {
       setError("Failed to register your agreement. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  // ─────────────────────────────────────────────
-  //  DISAGREE — open the form
-  //  If the user currently agrees, remove that first
-  // ─────────────────────────────────────────────
+  // DISAGREE — open form
   const handleDisagree = async () => {
+    if (!isLoggedIn) return onAuthRequired();
     if (loading) return;
-
-    // If user had agreed, silently remove it before showing disagree form
     if (agreed === true) {
       try {
         await api.delete("/agree", {
-          data: { profileId: currentProfileId, postId: post.id },
+          data: { profileId: currentProfileId, postId: post.content.id },
         });
         setAgreed(null);
         setAgreeCount((c) => Math.max(0, c - 1));
@@ -130,77 +162,138 @@ export default function PostCard({
     setShowDisagreeForm(true);
   };
 
-
+  // SUBMIT DISAGREE
   const submitDisagree = async () => {
-    if (!reason.trim() || loading) return; 
+    if (!reason.trim() || loading) return;
     setLoading(true);
     setError(null);
-
     try {
-      const disagreeRes = await api.post("/disagree", {
+      const res = await api.post("/disagree", {
         profileId: currentProfileId,
-        postId: post.id,
+        postId: post.content.id,
         reason: reason.trim(),
         ...(proofUrl.trim() && { proofUrl: proofUrl.trim() }),
       });
 
-      // Notify the post owner
       api
         .post("/notifications/disagree", {
-          recipientWalletAddress: post.ownerWalletAddress,
+          recipientWalletAddress: post.authorProfile.id,
           actorProfileId: currentProfileId,
-          postId: post.id,
-          commentId: disagreeRes.data.data?.id,
+          postId: post.content.id,
+          commentId: res.data.data?.id,
         })
         .catch(() => {});
+
+      if (showDisagreements) {
+        setDisagreements((prev) => [
+          {
+            comment: {
+              id: res.data.data?.id ?? `temp-${Date.now()}`,
+              text: reason.trim(),
+              proofUrl: proofUrl.trim() || undefined,
+              created_at: Date.now(),
+            },
+            author: { id: currentProfileId!, username: currentProfileId! },
+            socialCounts: { likeCount: 0 },
+          },
+          ...prev,
+        ]);
+      }
 
       setAgreed(false);
       setShowDisagreeForm(false);
       setReason("");
       setProofUrl("");
-    } catch (err: any) {
+      setDisagreeCount((c) => c + 1);
+    } catch {
       setError("Failed to submit your disagreement. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-
   return (
     <div className="p-4 border-b border-gray-200 hover:bg-gray-50 transition">
-      <div className="font-semibold">{post.name}</div>
-      <div className="text-sm text-gray-500">{post.handle}</div>
-      <p className="mt-2 text-gray-800">{post.content}</p>
+      {/* AUTHOR */}
+      <div className="flex items-center gap-2 mb-2">
+        {post.authorProfile.image && (
+          <img
+            src={post.authorProfile.image}
+            alt={post.authorProfile.username}
+            className="w-8 h-8 rounded-full object-cover"
+          />
+        )}
+        <div>
+          <div className="font-semibold text-sm">
+            {post.authorProfile.username}
+          </div>
+          <div className="text-xs text-gray-400">@{post.authorProfile.id}</div>
+        </div>
+        <span className="ml-auto text-xs text-gray-300">
+          {new Date(post.content.created_at).toLocaleDateString()}
+        </span>
+      </div>
+
+      {/* CONTENT */}
+      <p className="text-gray-800 text-sm">{post.content.text ?? "—"}</p>
+
+      {/* PROOF BADGE */}
+      {post.content.proofUrl && (
+        <a
+          href={post.content.proofUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-2 inline-flex items-center gap-1 text-xs text-blue-500 hover:underline"
+        >
+          🔗 View Proof
+        </a>
+      )}
+      {post.content.proofCitation && (
+        <p className="mt-1 text-xs text-gray-400 italic">
+          📚 {post.content.proofCitation}
+        </p>
+      )}
 
       {/* ERROR */}
       {error && <p className="mt-2 text-xs text-red-500">{error}</p>}
 
       {/* ACTION BUTTONS */}
-      <div className="flex items-center gap-3 mt-4">
+      <div className="flex items-center gap-3 mt-3">
         <button
           onClick={handleAgree}
           disabled={loading}
-          className={`px-4 py-1 rounded-full text-sm border transition ${
+          title={!isLoggedIn ? "Sign in to agree" : undefined}
+          className={`flex items-center gap-1 px-4 py-1 rounded-full text-sm border transition disabled:opacity-50 ${
             agreed === true
               ? "bg-green-500 text-white border-green-500"
               : "border-gray-300 hover:bg-green-50 text-gray-700"
-          } disabled:opacity-50`}
+          }`}
         >
-          👍 Agree{" "}
-          {agreeCount > 0 && <span className="ml-1 text-xs">{agreeCount}</span>}
+          👍 Agree <span className="text-xs font-medium">{agreeCount}</span>
         </button>
 
         <button
           onClick={handleDisagree}
           disabled={loading}
-          className={`px-4 py-1 rounded-full text-sm border transition ${
+          title={!isLoggedIn ? "Sign in to disagree" : undefined}
+          className={`flex items-center gap-1 px-4 py-1 rounded-full text-sm border transition disabled:opacity-50 ${
             agreed === false
               ? "bg-red-500 text-white border-red-500"
               : "border-gray-300 hover:bg-red-50 text-gray-700"
-          } disabled:opacity-50`}
+          }`}
         >
-          👎 Disagree
+          👎 Disagree{" "}
+          <span className="text-xs font-medium">{disagreeCount}</span>
         </button>
+
+        {disagreeCount > 0 && (
+          <button
+            onClick={toggleDisagreements}
+            className="ml-auto text-xs text-gray-400 hover:text-gray-600 underline"
+          >
+            {showDisagreements ? "Hide" : "View"} disagreements
+          </button>
+        )}
       </div>
 
       {/* DISAGREE FORM */}
@@ -240,6 +333,157 @@ export default function PostCard({
             </button>
           </div>
         </div>
+      )}
+
+      {/* DISAGREEMENTS LIST */}
+      {showDisagreements && (
+        <div className="mt-3 space-y-3">
+          {loadingDisagreements ? (
+            <p className="text-xs text-gray-400">Loading disagreements...</p>
+          ) : disagreements.length === 0 ? (
+            <p className="text-xs text-gray-400">No disagreements yet.</p>
+          ) : (
+            disagreements.map((d) => (
+              <div
+                key={d.comment.id}
+                className="bg-red-50 border border-red-100 rounded-lg p-3"
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-semibold text-gray-700">
+                    @{d.author.username}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    {new Date(d.comment.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-800">{d.comment.text}</p>
+                {d.comment.proofUrl && (
+                  <a
+                    href={d.comment.proofUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 text-xs text-blue-500 hover:underline block truncate"
+                  >
+                    🔗 {d.comment.proofUrl}
+                  </a>
+                )}
+                {d.comment.proofCitation && (
+                  <p className="mt-1 text-xs text-gray-500 italic">
+                    📚 {d.comment.proofCitation}
+                  </p>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+//  FEED — fetches posts and renders PostCards
+// ─────────────────────────────────────────────
+export default function Feed({
+  currentProfileId,
+  currentWalletAddress,
+  onAuthRequired,
+  feedType = "explore",
+}: FeedProps) {
+  const [posts, setPosts] = useState<TapestryPost[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchPosts = async (pageNum: number) => {
+    if (loading) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const endpoint =
+        feedType === "home" && currentProfileId
+          ? `/posts/feed/home?profileId=${currentProfileId}&pageSize=20`
+          : `/posts/feed/explore`;
+
+      const res = await api.get(endpoint);
+      const newPosts: TapestryPost[] =
+        res.data.data?.contents ?? res.data.data ?? [];
+
+      setPosts((prev) => (pageNum === 1 ? newPosts : [...prev, ...newPosts]));
+      setHasMore(newPosts.length === 20);
+    } catch {
+      setError("Failed to load posts. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch on mount and when feedType/currentProfileId changes
+  useEffect(() => {
+    setPage(1);
+    setPosts([]);
+    fetchPosts(1);
+  }, [feedType, currentProfileId]);
+
+  const loadMore = () => {
+    const next = page + 1;
+    setPage(next);
+    fetchPosts(next);
+  };
+
+  return (
+    <div className="max-w-xl mx-auto">
+      {/* LOADING SKELETON */}
+      {loading && posts.length === 0 && (
+        <div className="space-y-4 p-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="animate-pulse space-y-2">
+              <div className="h-4 bg-gray-200 rounded w-1/3" />
+              <div className="h-3 bg-gray-100 rounded w-full" />
+              <div className="h-3 bg-gray-100 rounded w-2/3" />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ERROR */}
+      {error && (
+        <div className="p-4 text-sm text-red-500 text-center">{error}</div>
+      )}
+
+      {/* POSTS */}
+      {posts.map((post) => (
+        <PostCard
+          key={post.content.id}
+          post={post}
+          currentProfileId={currentProfileId}
+          onAuthRequired={onAuthRequired}
+        />
+      ))}
+
+      {/* EMPTY STATE */}
+      {!loading && posts.length === 0 && !error && (
+        <div className="p-8 text-center text-gray-400 text-sm">
+          No posts yet. Be the first to post!
+        </div>
+      )}
+
+      {/* LOAD MORE */}
+      {hasMore && !loading && posts.length > 0 && (
+        <div className="p-4 text-center">
+          <button
+            onClick={loadMore}
+            className="text-sm text-gray-500 hover:text-black underline"
+          >
+            Load more
+          </button>
+        </div>
+      )}
+
+      {/* LOADING MORE INDICATOR */}
+      {loading && posts.length > 0 && (
+        <div className="p-4 text-center text-xs text-gray-400">Loading...</div>
       )}
     </div>
   );

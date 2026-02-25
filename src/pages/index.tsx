@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Home, Search, Bell, User } from "lucide-react";
 import SignupModal from "@/components/SignupModal";
-import PostCard from "@/components/PostCard";
+import Feed from "@/components/PostCard";
 
 const Index = () => {
   const [open, setOpen] = useState(false);
@@ -55,7 +55,12 @@ const Index = () => {
           </div>
 
           {/* Posts */}
-          <PostCard />
+          <Feed
+            currentProfileId={null}
+            currentWalletAddress={null}
+            onAuthRequired={() => setOpen(true)}
+            feedType="explore" // or "home" for following feed
+          />
         </main>
 
         {/* RIGHT PANEL */}
