@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Home, Search, Bell, User } from "lucide-react";
 import SignupModal from "@/components/SignupModal";
 import Feed from "@/components/PostCard";
+import FollowItem from "@/components/FollowItem";
 
 const Index = () => {
   const [open, setOpen] = useState(false);
@@ -65,11 +66,10 @@ const Index = () => {
 
         {/* RIGHT PANEL */}
         <aside className="hidden lg:block w-80 p-6 space-y-6">
-          <div className="bg-white p-4 rounded-xl border border-gray-200">
-            <h3 className="font-semibold mb-3">Who to follow</h3>
-            <FollowItem name="Web3 Builder" handle="@web3" />
-            <FollowItem name="Solana Dev" handle="@solana" />
-          </div>
+          <FollowItem
+            currentProfileId={null}
+            onAuthRequired={() => setOpen(true)}
+          />
 
           <div className="bg-white p-4 rounded-xl border border-gray-200">
             <h3 className="font-semibold mb-3">Trends</h3>
@@ -96,14 +96,3 @@ const SidebarItem = ({ icon, label }: any) => (
   </div>
 );
 
-const FollowItem = ({ name, handle }: any) => (
-  <div className="flex justify-between items-center mb-3">
-    <div>
-      <p className="font-medium text-sm">{name}</p>
-      <p className="text-xs text-gray-500">{handle}</p>
-    </div>
-    <button className="text-xs bg-black text-white px-3 py-1 rounded-full">
-      Follow
-    </button>
-  </div>
-);
