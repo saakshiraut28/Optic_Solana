@@ -49,6 +49,9 @@ interface FeedProps {
   feedType?: "explore" | "home"; // default: explore
 }
 
+// ─────────────────────────────────────────────
+//  SINGLE POST CARD
+// ─────────────────────────────────────────────
 function PostCard({
   post,
   currentProfileId,
@@ -237,7 +240,19 @@ function PostCard({
       {/* CONTENT */}
       <p className="text-gray-800 text-sm">{post.content.text ?? "—"}</p>
 
-      {/* PROOF BADGE */}
+      {/* PROOF IMAGE — render if proofMedia is a direct image URL */}
+      {post.content.proofMedia && (
+        <img
+          src={post.content.proofMedia}
+          alt="Proof"
+          className="mt-3 rounded-2xl border border-gray-100 max-h-80 w-full object-cover"
+          onError={(e) => {
+            e.currentTarget.style.display = "none";
+          }}
+        />
+      )}
+
+      {/* PROOF LINK */}
       {post.content.proofUrl && (
         <a
           href={post.content.proofUrl}
@@ -248,6 +263,23 @@ function PostCard({
           🔗 View Proof
         </a>
       )}
+
+      {/* PROOF MEDIA LINK — if proofMedia exists but image fails to load, show as link */}
+      {post.content.proofMedia &&
+        !post.content.proofMedia.match(
+          /\.(jpg|jpeg|png|gif|webp|svg)(\?.*)?$/i,
+        ) && (
+          <a
+            href={post.content.proofMedia}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-1 inline-flex items-center gap-1 text-xs text-blue-500 hover:underline"
+          >
+            🖼️ View Media
+          </a>
+        )}
+
+      {/* PROOF CITATION */}
       {post.content.proofCitation && (
         <p className="mt-1 text-xs text-gray-400 italic">
           📚 {post.content.proofCitation}
@@ -390,28 +422,39 @@ export default function Feed({
   onAuthRequired,
   feedType = "explore",
 }: FeedProps) {
-  const [posts, setPosts] = useState<TapestryPost[]>([]);
+  const [allPosts, setAllPosts] = useState<TapestryPost[]>([]); // all fetched posts globally sorted
   const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [fetchedAll, setFetchedAll] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const PAGE_SIZE = 20;
 
-  const fetchPosts = async (pageNum: number) => {
+  // Slice from globally sorted array for display
+  const posts = allPosts.slice(0, page * PAGE_SIZE);
+  const hasMore = posts.length < allPosts.length;
+
+  const fetchPosts = async () => {
     if (loading) return;
     setLoading(true);
     setError(null);
     try {
+      // Fetch a large batch, sort globally by created_at desc, paginate client-side
       const endpoint =
         feedType === "home" && currentProfileId
-          ? `/posts/feed/home?profileId=${currentProfileId}&pageSize=20`
-          : `/posts/feed/explore`;
+          ? `/posts/feed/home?profileId=${currentProfileId}&pageSize=100`
+          : `/posts/feed/explore?page=1&pageSize=100`;
 
       const res = await api.get(endpoint);
-      const newPosts: TapestryPost[] =
+      const fetched: TapestryPost[] =
         res.data.data?.contents ?? res.data.data ?? [];
 
-      setPosts((prev) => (pageNum === 1 ? newPosts : [...prev, ...newPosts]));
-      setHasMore(newPosts.length === 20);
+      // Global sort — newest first
+      const sorted = [...fetched].sort(
+        (a, b) => b.content.created_at - a.content.created_at,
+      );
+
+      setAllPosts(sorted);
+      setFetchedAll(true);
     } catch {
       setError("Failed to load posts. Please try again.");
     } finally {
@@ -422,15 +465,12 @@ export default function Feed({
   // Fetch on mount and when feedType/currentProfileId changes
   useEffect(() => {
     setPage(1);
-    setPosts([]);
-    fetchPosts(1);
+    setAllPosts([]);
+    setFetchedAll(false);
+    fetchPosts();
   }, [feedType, currentProfileId]);
 
-  const loadMore = () => {
-    const next = page + 1;
-    setPage(next);
-    fetchPosts(next);
-  };
+  const loadMore = () => setPage((p) => p + 1);
 
   return (
     <div className="max-w-xl mx-auto">
