@@ -1,44 +1,45 @@
 /** @format */
 
 import { useState } from "react";
-import { Home, Search, Bell, User } from "lucide-react";
+import LeftSidebar from "@/components/LeftSidebar";
 import SignupModal from "@/components/SignupModal";
 import Feed from "@/components/PostCard";
 import FollowItem from "@/components/FollowItem";
+import useAuthStore from "@/hooks/useAuthStore";
 
 const Index = () => {
-  const [open, setOpen] = useState(false);
+  const [showSignup, setShowSignup] = useState(false);
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
 
   return (
     <div className="flex w-screen justify-centered min-h-screen bg-gray-50">
       <div className="mx-20 mx-auto flex">
         {/* LEFT SIDEBAR */}
-        <aside className="hidden md:flex w-64 flex-col justify-between border-r border-gray-200 p-6 bg-white">
-          <div className="space-y-6">
-            <h1 className="text-2xl font-black">Optic</h1>
-
-            <nav className="space-y-4 text-gray-700">
-              <SidebarItem icon={<Home size={20} />} label="Home" />
-              <SidebarItem icon={<Search size={20} />} label="Explore" />
-              <SidebarItem icon={<Bell size={20} />} label="Notifications" />
-              <SidebarItem icon={<User size={20} />} label="Profile" />
-            </nav>
-          </div>
-
-          <div className="text-sm text-gray-500">© 2026 YourApp</div>
-        </aside>
+        <LeftSidebar />
 
         {/* CENTER FEED */}
         <main className="flex-1 w-xl border-r border-gray-200 bg-white">
           {/* Feed Header */}
           <div className="sticky top-0 flex justify-between items-center bg-white p-4 border-b border-gray-200">
             <p className="text-xl font-black">Home</p>
-            <button
-              onClick={() => setOpen(true)}
-              className="w-content bg-black text-white py-2.5 rounded-full hover:bg-gray-900 transition"
-            >
-              Sign up
-            </button>
+            {user ? (
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={logout}
+                  className="text-sm text-gray-400 hover:text-black underline"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowSignup(true)}
+                className="w-content bg-black text-white px-4 py-2 rounded-full hover:bg-gray-900 transition text-sm"
+              >
+                Sign up
+              </button>
+            )}
           </div>
 
           {/* Create Post Box */}
@@ -57,10 +58,10 @@ const Index = () => {
 
           {/* Posts */}
           <Feed
-            currentProfileId={null}
-            currentWalletAddress={null}
-            onAuthRequired={() => setOpen(true)}
-            feedType="explore" // or "home" for following feed
+            currentProfileId={user?.id ?? null}
+            currentWalletAddress={user?.walletAddress ?? null}
+            onAuthRequired={() => setShowSignup(true)}
+            feedType="explore"
           />
         </main>
 
@@ -68,7 +69,7 @@ const Index = () => {
         <aside className="hidden lg:block w-80 p-6 space-y-6">
           <FollowItem
             currentProfileId={null}
-            onAuthRequired={() => setOpen(true)}
+            onAuthRequired={() => setShowSignup(true)}
           />
 
           <div className="bg-white p-4 rounded-xl border border-gray-200">
@@ -79,7 +80,7 @@ const Index = () => {
           </div>
         </aside>
 
-        <SignupModal isOpen={open} onClose={() => setOpen(false)} />
+        <SignupModal isOpen={showSignup} onClose={() => setShowSignup(false)} />
       </div>
     </div>
   );
