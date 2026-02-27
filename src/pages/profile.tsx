@@ -6,15 +6,14 @@ import {
   Link as LinkIcon,
   Calendar,
   Grid3X3,
+  Upload,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import axios from "axios";
+import api from "@/lib/api";
 import useAuthStore from "@/hooks/useAuthStore";
 import LeftSidebar from "@/components/LeftSidebar";
 import WhoToFollow from "@/components/FollowItem";
 import SignupModal from "@/components/SignupModal";
-
-const api = axios.create({ baseURL: "http://localhost:3000/api" });
 
 interface TapestryProfile {
   id: string;
@@ -38,6 +37,13 @@ interface TapestryPost {
   socialCounts: { likeCount: number; commentCount: number };
 }
 
+interface FollowProfile {
+  id: string;
+  username: string;
+  image?: string;
+  bio?: string;
+}
+
 const Profile = () => {
   const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
@@ -55,6 +61,14 @@ const Profile = () => {
     profileImage: "",
     website: "",
   });
+  const [imgUploading, setImgUploading] = useState(false);
+  const [imgError, setImgError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<
+    "posts" | "following" | "followers"
+  >("posts");
+  const [followingList, setFollowingList] = useState<FollowProfile[]>([]);
+  const [followersList, setFollowersList] = useState<FollowProfile[]>([]);
+  const [followListLoading, setFollowListLoading] = useState(false);
 
   // Fetch profile
   useEffect(() => {
@@ -103,6 +117,65 @@ const Profile = () => {
     };
     load();
   }, [user?.id]);
+
+  // Fetch following or followers list when tab changes
+  useEffect(() => {
+    if (!user?.id) return;
+    if (activeTab === "posts") return;
+    const load = async () => {
+      setFollowListLoading(true);
+      try {
+        const endpoint =
+          activeTab === "following"
+            ? `/profile/${user.id}/following`
+            : `/profile/${user.id}/followers`;
+        const res = await api.get(endpoint);
+        const profiles: FollowProfile[] = (res.data.data?.profiles ?? []).map(
+          (p: any) => ({
+            id: p.profile?.id ?? p.id,
+            username: p.profile?.username ?? p.username,
+            image: p.profile?.image ?? p.image,
+            bio: p.profile?.bio ?? p.bio,
+          }),
+        );
+        if (activeTab === "following") setFollowingList(profiles);
+        else setFollowersList(profiles);
+      } catch {
+        /* silent */
+      } finally {
+        setFollowListLoading(false);
+      }
+    };
+    load();
+  }, [activeTab, user?.id]);
+
+  // Upload image to Imgbb and return the URL
+  const uploadImage = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append("image", file);
+    const res = await fetch(
+      `https://api.imgbb.com/1/upload?key=${import.meta.env.VITE_IMGBB_API_KEY}`,
+      { method: "POST", body: formData },
+    );
+    const data = await res.json();
+    if (!data.success) throw new Error("Upload failed");
+    return data.data.url as string;
+  };
+
+  const handleImagePick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImgUploading(true);
+    setImgError(null);
+    try {
+      const url = await uploadImage(file);
+      setDraft((prev) => ({ ...prev, profileImage: url }));
+    } catch {
+      setImgError("Upload failed. Please try again.");
+    } finally {
+      setImgUploading(false);
+    }
+  };
 
   const openEdit = () => {
     setDraft({
@@ -207,7 +280,7 @@ const Profile = () => {
               </div>
 
               {/* AVATAR ROW */}
-              <div className="px-4 -mt-10 mb-1">
+              <div className="px-4 -mt-12 mb-1 relative z-10">
                 <div className="w-20 h-20 rounded-full border-4 border-white overflow-hidden bg-gray-100 flex items-center justify-center shadow-sm">
                   {loading ? (
                     <div className="w-full h-full bg-gray-200 animate-pulse" />
@@ -270,19 +343,19 @@ const Profile = () => {
                       )}
                     </div>
 
-                    {/* FOLLOW COUNTS */}
+                    {/* FOLLOW COUNTS — plain text, tabs below handle navigation */}
                     <div className="flex gap-5 mt-3">
-                      <span className="text-sm hover:underline cursor-pointer">
-                        <span className="font-bold">
-                          {profile?.following ?? 0}
-                        </span>
-                        <span className="text-gray-500 ml-1">Following</span>
-                      </span>
-                      <span className="text-sm hover:underline cursor-pointer">
+                      <span className="text-sm">
                         <span className="font-bold">
                           {profile?.followers ?? 0}
                         </span>
                         <span className="text-gray-500 ml-1">Followers</span>
+                      </span>
+                      <span className="text-sm">
+                        <span className="font-bold">
+                          {profile?.following ?? 0}
+                        </span>
+                        <span className="text-gray-500 ml-1">Following</span>
                       </span>
                     </div>
                   </>
@@ -291,74 +364,159 @@ const Profile = () => {
 
               {/* TABS */}
               <div className="flex border-b border-gray-200">
-                <div className="flex-1 py-3 text-sm font-semibold text-center relative">
-                  Posts
-                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-0.5 bg-black rounded-full" />
-                </div>
+                {(["posts", "followers", "following"] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      outline: "none",
+                      boxShadow: "none",
+                    }}
+                    className={`flex-1 py-3 text-sm font-semibold capitalize transition-colors relative cursor-pointer ${
+                      activeTab === tab
+                        ? "text-black"
+                        : "text-gray-400 hover:text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                    {activeTab === tab && (
+                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-black rounded-full" />
+                    )}
+                  </button>
+                ))}
               </div>
 
-              {/* POSTS */}
-              {postsLoading ? (
-                <div className="space-y-4 p-4">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="animate-pulse space-y-2">
-                      <div className="h-4 bg-gray-100 rounded w-3/4" />
-                      <div className="h-3 bg-gray-50 rounded w-1/2" />
-                    </div>
-                  ))}
-                </div>
-              ) : posts.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center px-8">
-                  <Grid3X3 size={36} className="text-gray-200 mb-3" />
-                  <p className="font-bold text-lg">No posts yet</p>
-                  <p className="text-gray-400 text-sm mt-1">
-                    When you post something, it'll show up here.
-                  </p>
-                </div>
-              ) : (
-                posts.map((post) => (
-                  <div
-                    key={post.content.id}
-                    className="px-4 py-4 border-b border-gray-100 hover:bg-gray-50 transition"
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-bold text-sm">
-                        {post.authorProfile.username}
-                      </span>
-                      <span className="text-gray-400 text-sm">
-                        @{post.authorProfile.id}
-                      </span>
-                      <span className="text-gray-300 text-xs ml-auto">
-                        {new Date(post.content.created_at).toLocaleDateString(
-                          "en-US",
-                          { month: "short", day: "numeric" },
-                        )}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-900 leading-relaxed">
-                      {post.content.text ?? "—"}
-                    </p>
-                    {post.content.proofUrl && (
-                      <a
-                        href={post.content.proofUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-1.5 inline-flex items-center gap-1 text-xs text-blue-500 hover:underline"
-                      >
-                        <LinkIcon size={11} /> View Proof
-                      </a>
-                    )}
-                    <div className="flex gap-4 mt-2">
-                      <span className="text-xs text-gray-400">
-                        👍 {post.socialCounts.likeCount}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        👎 {post.socialCounts.commentCount}
-                      </span>
-                    </div>
+              {/* ── POSTS TAB ── */}
+              {activeTab === "posts" &&
+                (postsLoading ? (
+                  <div className="space-y-4 p-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="animate-pulse space-y-2">
+                        <div className="h-4 bg-gray-100 rounded w-3/4" />
+                        <div className="h-3 bg-gray-50 rounded w-1/2" />
+                      </div>
+                    ))}
                   </div>
-                ))
-              )}
+                ) : posts.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center px-8">
+                    <Grid3X3 size={36} className="text-gray-200 mb-3" />
+                    <p className="font-bold text-lg">No posts yet</p>
+                    <p className="text-gray-400 text-sm mt-1">
+                      When you post something, it'll show up here.
+                    </p>
+                  </div>
+                ) : (
+                  posts.map((post) => (
+                    <div
+                      key={post.content.id}
+                      className="px-4 py-4 border-b border-gray-100 hover:bg-gray-50 transition"
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-bold text-sm">
+                          {post.authorProfile.username}
+                        </span>
+                        <span className="text-gray-400 text-sm">
+                          @{post.authorProfile.id}
+                        </span>
+                        <span className="text-gray-300 text-xs ml-auto">
+                          {new Date(post.content.created_at).toLocaleDateString(
+                            "en-US",
+                            { month: "short", day: "numeric" },
+                          )}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-900 leading-relaxed">
+                        {post.content.text ?? "—"}
+                      </p>
+                      {post.content.proofUrl && (
+                        <a
+                          href={post.content.proofUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-1.5 inline-flex items-center gap-1 text-xs text-blue-500 hover:underline"
+                        >
+                          <LinkIcon size={11} /> View Proof
+                        </a>
+                      )}
+                      <div className="flex gap-4 mt-2">
+                        <span className="text-xs text-gray-400">
+                          👍 {post.socialCounts.likeCount}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          👎 {post.socialCounts.commentCount}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                ))}
+
+              {/* ── FOLLOWING / FOLLOWERS TAB ── */}
+              {(activeTab === "following" || activeTab === "followers") &&
+                (followListLoading ? (
+                  <div className="space-y-3 p-4">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div
+                        key={i}
+                        className="animate-pulse flex items-center gap-3"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-gray-200" />
+                        <div className="flex-1 space-y-1">
+                          <div className="h-3 bg-gray-200 rounded w-1/3" />
+                          <div className="h-2 bg-gray-100 rounded w-1/4" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (activeTab === "following" ? followingList : followersList)
+                    .length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center px-8">
+                    <p className="font-bold text-lg">
+                      {activeTab === "following"
+                        ? "Not following anyone yet"
+                        : "No followers yet"}
+                    </p>
+                    <p className="text-gray-400 text-sm mt-1">
+                      {activeTab === "following"
+                        ? "When you follow someone, they'll appear here."
+                        : "When someone follows you, they'll appear here."}
+                    </p>
+                  </div>
+                ) : (
+                  (activeTab === "following"
+                    ? followingList
+                    : followersList
+                  ).map((p) => (
+                    <div
+                      key={p.id}
+                      className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center flex-shrink-0">
+                        {p.image ? (
+                          <img
+                            src={p.image}
+                            alt={p.username}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-sm font-bold text-gray-500">
+                            {p.username?.[0]?.toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm">{p.username}</p>
+                        <p className="text-xs text-gray-400">@{p.id}</p>
+                        {p.bio && (
+                          <p className="text-xs text-gray-500 truncate mt-0.5">
+                            {p.bio}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                ))}
             </>
           )}
         </main>
@@ -405,7 +563,8 @@ const Profile = () => {
             {/* Banner + avatar preview */}
             <div className="h-24 bg-gradient-to-br from-gray-900 via-gray-800 to-black" />
             <div className="px-4 -mt-8 mb-4">
-              <div className="w-16 h-16 rounded-full border-4 border-white overflow-hidden bg-gray-200 flex items-center justify-center">
+              {/* Clickable avatar — opens file picker */}
+              <label className="relative w-16 h-16 rounded-full border-4 border-white overflow-hidden bg-gray-200 flex items-center justify-center cursor-pointer group">
                 {draft.profileImage ? (
                   <img
                     src={draft.profileImage}
@@ -417,7 +576,28 @@ const Profile = () => {
                     {initials}
                   </span>
                 )}
-              </div>
+                {/* Hover overlay */}
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition rounded-full">
+                  {imgUploading ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Upload size={16} className="text-white" />
+                  )}
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImagePick}
+                  disabled={imgUploading}
+                />
+              </label>
+              <p className="text-xs text-gray-400 mt-1">
+                Click to upload photo
+              </p>
+              {imgError && (
+                <p className="text-xs text-red-500 mt-1">{imgError}</p>
+              )}
             </div>
 
             <form onSubmit={handleSubmit} className="px-4 pb-6 space-y-4">
@@ -430,19 +610,6 @@ const Profile = () => {
                   value={draft.bio}
                   onChange={handleChange}
                   className="w-full mt-1 border border-gray-200 rounded-xl px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-black"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-gray-500 font-medium">
-                  Profile Image URL
-                </label>
-                <input
-                  name="profileImage"
-                  type="url"
-                  placeholder="https://example.com/avatar.jpg"
-                  value={draft.profileImage}
-                  onChange={handleChange}
-                  className="w-full mt-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
                 />
               </div>
               <div>
@@ -467,6 +634,6 @@ const Profile = () => {
       <SignupModal isOpen={showSignup} onClose={() => setShowSignup(false)} />
     </div>
   );
-};
+};;;;
 
 export default Profile;

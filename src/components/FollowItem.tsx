@@ -1,8 +1,6 @@
 /** @format */
 import { useEffect, useState } from "react";
-import axios from "axios";
-
-const api = axios.create({ baseURL: "http://localhost:3000/api" });
+import api from "@/lib/api";
 
 interface Profile {
   id: string;
@@ -22,6 +20,7 @@ export default function WhoToFollow({
 }: WhoToFollowProps) {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  // @ts-ignore
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
 
@@ -156,7 +155,7 @@ export default function WhoToFollow({
               <button
                 onClick={() => handleFollow(profile.id)}
                 disabled={pendingIds.has(profile.id)}
-                className="flex-shrink-0 text-xs px-3 py-1 rounded-full border border-gray-300 hover:bg-black text-white hover:border-black transition disabled:opacity-40"
+                className="flex-shrink-0 text-xs px-3 py-1 rounded-full border border-gray-300 hover:bg-black text-black hover:border-black transition disabled:opacity-40"
               >
                 {pendingIds.has(profile.id) ? "..." : "Follow"}
               </button>

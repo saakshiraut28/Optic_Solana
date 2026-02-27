@@ -7,13 +7,11 @@ import {
   ThumbsDown,
   MessageSquare,
 } from "lucide-react";
-import axios from "axios";
+import api from "@/lib/api";
 import useAuthStore from "@/hooks/useAuthStore";
 import LeftSidebar from "@/components/LeftSidebar";
 import WhoToFollow from "@/components/FollowItem";
 import SignupModal from "@/components/SignupModal";
-
-const api = axios.create({ baseURL: "http://localhost:3000/api" });
 
 interface Notification {
   id: string;
@@ -91,7 +89,7 @@ const Notifications = () => {
         });
         setNotifications(res.data.data?.notifications ?? res.data.data ?? []);
       } catch {
-        setError("Failed to load notifications.");
+        setError("No notifications yet.");
       } finally {
         setLoading(false);
       }

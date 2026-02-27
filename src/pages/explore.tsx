@@ -2,13 +2,11 @@
 import { useEffect, useState, useRef } from "react";
 import { Search, Link as LinkIcon, X } from "lucide-react";
 import { Link } from "react-router-dom";
-import axios from "axios";
+import api from "@/lib/api";
 import useAuthStore from "@/hooks/useAuthStore";
 import LeftSidebar from "@/components/LeftSidebar";
 import WhoToFollow from "@/components/FollowItem";
 import SignupModal from "@/components/SignupModal";
-
-const api = axios.create({ baseURL: "http://localhost:3000/api" });
 
 interface SearchedProfile {
   id: string;

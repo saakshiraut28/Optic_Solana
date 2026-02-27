@@ -1,8 +1,7 @@
 /** @format */
 import { useEffect, useState } from "react";
-import axios from "axios";
-
-const api = axios.create({ baseURL: "http://localhost:3000/api" });
+import api from "@/lib/api";
+import { ArrowBigLeft, Camera, Link } from "lucide-react";
 
 // ─────────────────────────────────────────────
 //  TYPES
@@ -258,9 +257,10 @@ function PostCard({
           href={post.content.proofUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-2 inline-flex items-center gap-1 text-xs text-blue-500 hover:underline"
+          className="mt-2 inline-flex items-center gap-1 text-xs text-blue-500 hover:underline break-all"
         >
-          🔗 View Proof
+          <Link size={10} />
+          {post.content.proofUrl}
         </a>
       )}
 
@@ -273,16 +273,16 @@ function PostCard({
             href={post.content.proofMedia}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-1 inline-flex items-center gap-1 text-xs text-blue-500 hover:underline"
+            className="text-center mt-1 inline-flex items-center gap-1 text-xs text-blue-500 hover:underline"
           >
-            🖼️ View Media
+            <Camera size={10} /> View Media
           </a>
         )}
 
       {/* PROOF CITATION */}
       {post.content.proofCitation && (
         <p className="mt-1 text-xs text-gray-400 italic">
-          📚 {post.content.proofCitation}
+          {post.content.proofCitation}
         </p>
       )}
 
@@ -297,11 +297,11 @@ function PostCard({
           title={!isLoggedIn ? "Sign in to agree" : undefined}
           className={`flex items-center gap-1 px-4 py-1 rounded-full text-sm border transition disabled:opacity-50 ${
             agreed === true
-              ? "bg-green-500 text-white border-green-500"
-              : "border-gray-300 hover:bg-green-50 text-gray-700"
+              ? "bg-blue-500 text-white border-blue-500"
+              : "border-gray-300 hover:bg-blue-50 text-gray-700"
           }`}
         >
-          👍 Agree <span className="text-xs font-medium">{agreeCount}</span>
+          👍 <span className="text-xs font-medium">{agreeCount}</span>
         </button>
 
         <button
@@ -314,8 +314,7 @@ function PostCard({
               : "border-gray-300 hover:bg-red-50 text-gray-700"
           }`}
         >
-          👎 Disagree{" "}
-          <span className="text-xs font-medium">{disagreeCount}</span>
+          👎 <span className="text-xs font-medium">{disagreeCount}</span>
         </button>
 
         {disagreeCount > 0 && (
@@ -378,7 +377,7 @@ function PostCard({
             disagreements.map((d) => (
               <div
                 key={d.comment.id}
-                className="bg-red-50 border border-red-100 rounded-lg p-3"
+                className="bg-gray-100 border border-red-100 rounded-lg p-3"
               >
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-semibold text-gray-700">
@@ -394,14 +393,14 @@ function PostCard({
                     href={d.comment.proofUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-1 text-xs text-blue-500 hover:underline block truncate"
+                    className="flex text-center items-center mt-1 text-xs text-blue-500 hover:underline block truncate"
                   >
-                    🔗 {d.comment.proofUrl}
+                    <Link size={10} /> {d.comment.proofUrl}
                   </a>
                 )}
                 {d.comment.proofCitation && (
-                  <p className="mt-1 text-xs text-gray-500 italic">
-                    📚 {d.comment.proofCitation}
+                  <p className="flex text-center items-center mt-1 text-xs text-gray-500 italic">
+                    <ArrowBigLeft size={10} /> {d.comment.proofCitation}
                   </p>
                 )}
               </div>
@@ -418,6 +417,7 @@ function PostCard({
 // ─────────────────────────────────────────────
 export default function Feed({
   currentProfileId,
+  // @ts-ignore
   currentWalletAddress,
   onAuthRequired,
   feedType = "explore",
@@ -425,6 +425,7 @@ export default function Feed({
   const [allPosts, setAllPosts] = useState<TapestryPost[]>([]); // all fetched posts globally sorted
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  // @ts-ignore
   const [fetchedAll, setFetchedAll] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const PAGE_SIZE = 20;

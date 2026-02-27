@@ -1,14 +1,12 @@
 /** @format */
 import { useState } from "react";
 import { Link2, Image, BookOpen, ChevronDown, ChevronUp } from "lucide-react";
-import axios from "axios";
+import api from "@/lib/api";
 import LeftSidebar from "@/components/LeftSidebar";
 import SignupModal from "@/components/SignupModal";
 import Feed from "@/components/PostCard";
 import WhoToFollow from "@/components/FollowItem";
 import useAuthStore from "@/hooks/useAuthStore";
-
-const api = axios.create({ baseURL: "http://localhost:3000/api" });
 
 const Index = () => {
   const [showSignup, setShowSignup] = useState(false);
@@ -23,16 +21,54 @@ const Index = () => {
   const [showProofFields, setShowProofFields] = useState(false);
   const [posting, setPosting] = useState(false);
   const [postError, setPostError] = useState<string | null>(null);
+  const [verifying, setVerifying] = useState(false);
+  const [verifyResult, setVerifyResult] = useState<{
+    status: string;
+    score: number;
+    reason: string;
+  } | null>(null);
   const [feedKey, setFeedKey] = useState(0); // increment to force feed refresh
 
   const canPost = !!user && content.trim().length > 0;
 
   const handlePost = async () => {
-    if (!canPost || posting) return;
-    setPosting(true);
+    if (!canPost || posting || verifying) return;
     setPostError(null);
+
+    // ── Step 1: AI verification ──
+    setVerifying(true);
     try {
-      // Determine proofType
+      const verifyRes = await api.post("/verify", {
+        content: content.trim(),
+        ...(proofUrl && { proofUrl: proofUrl.trim() }),
+        ...(proofMedia && { proofMedia: proofMedia.trim() }),
+        ...(proofCitation && { proofCitation: proofCitation.trim() }),
+      });
+
+      if (!verifyRes.data.approved) {
+        setVerifyResult({
+          status: verifyRes.data.status,
+          score: verifyRes.data.score,
+          reason: verifyRes.data.reason,
+        });
+        setVerifying(false);
+        return;
+      }
+      // Approved — store result to show badge
+      setVerifyResult({
+        status: verifyRes.data.status,
+        score: verifyRes.data.score,
+        reason: verifyRes.data.reason,
+      });
+    } catch {
+      // If verification request itself fails, allow post through
+    } finally {
+      setVerifying(false);
+    }
+
+    // ── Step 2: Submit post ──
+    setPosting(true);
+    try {
       const proofType = proofUrl
         ? "link"
         : proofMedia
@@ -56,6 +92,7 @@ const Index = () => {
       setProofMedia("");
       setProofCitation("");
       setShowProofFields(false);
+      setVerifyResult(null);
 
       // Refresh the feed
       setFeedKey((k) => k + 1);
@@ -124,7 +161,11 @@ const Index = () => {
                     <textarea
                       placeholder="What's your take? Back it up with proof."
                       value={content}
-                      onChange={(e) => setContent(e.target.value)}
+                      onChange={(e) => {
+                        setContent(e.target.value);
+                        setVerifyResult(null);
+                        setPostError(null);
+                      }}
                       className="w-full resize-none border-none outline-none text-base placeholder-gray-400"
                       rows={2}
                     />
@@ -179,7 +220,32 @@ const Index = () => {
                       </div>
                     )}
 
-                    {/* Error */}
+                    {/* Verification result */}
+                    {verifyResult && (
+                      <div
+                        className={`mt-3 p-3 rounded-xl text-xs border ${
+                          ["False", "Misleading", "Rejected"].includes(
+                            verifyResult.status,
+                          )
+                            ? "bg-red-50 border-red-200 text-red-700"
+                            : verifyResult.status === "Unverified"
+                              ? "bg-yellow-50 border-yellow-200 text-yellow-700"
+                              : "bg-green-50 border-green-200 text-green-700"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-semibold">
+                            {verifyResult.status}
+                          </span>
+                          <span className="font-bold">
+                            Score: {verifyResult.score}/100
+                          </span>
+                        </div>
+                        <p>{verifyResult.reason}</p>
+                      </div>
+                    )}
+
+                    {/* Post error */}
                     {postError && (
                       <p className="mt-2 text-xs text-red-500">{postError}</p>
                     )}
@@ -210,10 +276,19 @@ const Index = () => {
                         )}
                         <button
                           onClick={handlePost}
-                          disabled={!canPost || posting || content.length > 280}
+                          disabled={
+                            !canPost ||
+                            posting ||
+                            verifying ||
+                            content.length > 280
+                          }
                           className="bg-black text-white px-4 py-1.5 rounded-full text-sm hover:bg-gray-900 transition disabled:opacity-40"
                         >
-                          {posting ? "Posting..." : "Post"}
+                          {verifying
+                            ? "Checking..."
+                            : posting
+                              ? "Posting..."
+                              : "Post"}
                         </button>
                       </div>
                     </div>
@@ -251,6 +326,6 @@ const Index = () => {
       </div>
     </div>
   );
-};;
+};
 
 export default Index;
