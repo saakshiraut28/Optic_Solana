@@ -155,7 +155,7 @@ export default function WhoToFollow({
               <button
                 onClick={() => handleFollow(profile.id)}
                 disabled={pendingIds.has(profile.id)}
-                className="flex-shrink-0 text-xs px-3 py-1 rounded-full border border-gray-300 hover:bg-black text-black hover:border-black transition disabled:opacity-40"
+                className="flex-shrink-0 text-xs px-3 py-1 rounded-full border border-gray-300 hover:bg-black hover:text-white text-black hover:border-black transition disabled:opacity-40"
               >
                 {pendingIds.has(profile.id) ? "..." : "Follow"}
               </button>

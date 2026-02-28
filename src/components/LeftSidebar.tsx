@@ -25,7 +25,10 @@ const LeftSidebar = () => {
         </nav>
       </div>
 
-      <div className="text-sm text-gray-500">© 2026 OPTIC</div>
+      <div className="text-sm text-gray-500">
+        <p>© 2026 Optic</p>
+        <p>Powered by Tapestry.</p>
+      </div>
     </aside>
   );
 };
