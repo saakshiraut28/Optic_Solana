@@ -1,6 +1,6 @@
 /** @format */
 
-import { Home, Search, Bell, User } from "lucide-react";
+import { Home, Search, Bell, User, Bolt } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const LeftSidebar = () => {
@@ -21,6 +21,9 @@ const LeftSidebar = () => {
           </Link>
           <a href="/profile">
             <SidebarItem icon={<User size={20} />} label="Profile" />
+          </a>
+          <a href="/settings">
+            <SidebarItem icon={<Bolt size={20} />} label="Settings" />
           </a>
         </nav>
       </div>

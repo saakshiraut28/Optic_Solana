@@ -8,6 +8,7 @@ import Index from "./pages";
 import Profile from "./pages/profile";
 import Explore from "./pages/explore";
 import Notifications from "./pages/notifications";
+import Settings from "./pages/settings";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ const App = () => (
           <Route path="/explore" element={<Explore />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<a />} />
         </Routes>
       </BrowserRouter>
