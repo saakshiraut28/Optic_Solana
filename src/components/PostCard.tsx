@@ -1,7 +1,6 @@
 /** @format */
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
-import { ArrowBigLeft, Camera, Link } from "lucide-react";
 
 // ─────────────────────────────────────────────
 //  TYPES
@@ -259,8 +258,7 @@ function PostCard({
           rel="noopener noreferrer"
           className="mt-2 inline-flex items-center gap-1 text-xs text-blue-500 hover:underline break-all"
         >
-          <Link size={10} />
-          {post.content.proofUrl}
+          🔗 {post.content.proofUrl}
         </a>
       )}
 
@@ -273,16 +271,16 @@ function PostCard({
             href={post.content.proofMedia}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-center mt-1 inline-flex items-center gap-1 text-xs text-blue-500 hover:underline"
+            className="mt-1 inline-flex items-center gap-1 text-xs text-blue-500 hover:underline"
           >
-            <Camera size={10} /> View Media
+            🖼️ View Media
           </a>
         )}
 
       {/* PROOF CITATION */}
       {post.content.proofCitation && (
         <p className="mt-1 text-xs text-gray-400 italic">
-          {post.content.proofCitation}
+          📚 {post.content.proofCitation}
         </p>
       )}
 
@@ -297,11 +295,11 @@ function PostCard({
           title={!isLoggedIn ? "Sign in to agree" : undefined}
           className={`flex items-center gap-1 px-4 py-1 rounded-full text-sm border transition disabled:opacity-50 ${
             agreed === true
-              ? "bg-blue-500 text-white border-blue-500"
-              : "border-gray-300 hover:bg-blue-50 text-gray-700"
+              ? "bg-green-500 text-white border-green-500"
+              : "border-gray-300 hover:bg-green-50 text-gray-700"
           }`}
         >
-          👍 <span className="text-xs font-medium">{agreeCount}</span>
+          👍 Agree <span className="text-xs font-medium">{agreeCount}</span>
         </button>
 
         <button
@@ -314,7 +312,8 @@ function PostCard({
               : "border-gray-300 hover:bg-red-50 text-gray-700"
           }`}
         >
-          👎 <span className="text-xs font-medium">{disagreeCount}</span>
+          👎 Disagree{" "}
+          <span className="text-xs font-medium">{disagreeCount}</span>
         </button>
 
         {disagreeCount > 0 && (
@@ -377,7 +376,7 @@ function PostCard({
             disagreements.map((d) => (
               <div
                 key={d.comment.id}
-                className="bg-gray-100 border border-red-100 rounded-lg p-3"
+                className="bg-red-50 border border-red-100 rounded-lg p-3"
               >
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-semibold text-gray-700">
@@ -393,14 +392,14 @@ function PostCard({
                     href={d.comment.proofUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex text-center items-center mt-1 text-xs text-blue-500 hover:underline block truncate"
+                    className="mt-1 text-xs text-blue-500 hover:underline block truncate"
                   >
-                    <Link size={10} /> {d.comment.proofUrl}
+                    🔗 {d.comment.proofUrl}
                   </a>
                 )}
                 {d.comment.proofCitation && (
-                  <p className="flex text-center items-center mt-1 text-xs text-gray-500 italic">
-                    <ArrowBigLeft size={10} /> {d.comment.proofCitation}
+                  <p className="mt-1 text-xs text-gray-500 italic">
+                    📚 {d.comment.proofCitation}
                   </p>
                 )}
               </div>
@@ -417,7 +416,6 @@ function PostCard({
 // ─────────────────────────────────────────────
 export default function Feed({
   currentProfileId,
-  // @ts-ignore
   currentWalletAddress,
   onAuthRequired,
   feedType = "explore",
@@ -425,7 +423,6 @@ export default function Feed({
   const [allPosts, setAllPosts] = useState<TapestryPost[]>([]); // all fetched posts globally sorted
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
-  // @ts-ignore
   const [fetchedAll, setFetchedAll] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const PAGE_SIZE = 20;
@@ -440,12 +437,14 @@ export default function Feed({
     setError(null);
     try {
       // Fetch a large batch, sort globally by created_at desc, paginate client-side
-      const endpoint =
+      const res =
         feedType === "home" && currentProfileId
-          ? `/posts/feed/home?profileId=${currentProfileId}&pageSize=100`
-          : `/posts/feed/explore?page=1&pageSize=100`;
-
-      const res = await api.get(endpoint);
+          ? await api.get("/posts/feed/home", {
+              params: { profileId: currentProfileId, pageSize: 100 },
+            })
+          : await api.get("/posts/feed/explore", {
+              params: { page: 1, pageSize: 100 },
+            });
       const fetched: TapestryPost[] =
         res.data.data?.contents ?? res.data.data ?? [];
 
