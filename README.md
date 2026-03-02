@@ -1,6 +1,8 @@
 # Optic 
 
-> A verification-first platform where every claim earns its place.
+A verification-first platform where every claim earns its place.
+
+> Check out the app at **[optic-solana.vercel.app](optic-solana.vercel.app)**
 
 Optic is an AI-powered content verification platform that filters out noise and keeps only credible, substantive information. Every post is scored before it goes live making Optic a more reliable and accountable source of information.
 
