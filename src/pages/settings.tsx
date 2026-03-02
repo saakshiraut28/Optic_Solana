@@ -1,5 +1,5 @@
 /** @format */
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ArrowLeft, OctagonAlert } from "lucide-react";
 import { Link } from "react-router-dom";
 import api from "@/lib/api";
@@ -24,7 +24,6 @@ const Settings = () => {
   const logout = useAuthStore((state) => state.logout);
 
   const [showSignup, setShowSignup] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDeleteAccount = async () => {

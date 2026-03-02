@@ -416,6 +416,7 @@ function PostCard({
 // ─────────────────────────────────────────────
 export default function Feed({
   currentProfileId,
+  // @ts-ignore
   currentWalletAddress,
   onAuthRequired,
   feedType = "explore",
@@ -423,6 +424,7 @@ export default function Feed({
   const [allPosts, setAllPosts] = useState<TapestryPost[]>([]); // all fetched posts globally sorted
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  // @ts-ignore
   const [fetchedAll, setFetchedAll] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const PAGE_SIZE = 20;
