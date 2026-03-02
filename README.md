@@ -1,73 +1,77 @@
-# React + TypeScript + Vite
+# Optic 
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> A verification-first platform where every claim earns its place.
 
-Currently, two official plugins are available:
+Optic is an AI-powered content verification platform that filters out noise and keeps only credible, substantive information. Every post is scored before it goes live making Optic a more reliable and accountable source of information.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+> **Powered by [Tapestry](https://www.usetapestry.dev)** — Optic's verification and scoring engine is built on top of Tapestry, enabling intelligent, context-aware content evaluation at scale.
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🚀 Features
 
-## Expanding the ESLint configuration
+- **AI-Powered Verification** — Every claim is automatically scored for credibility before it can be published.
+- **Smart Content Filtering** — Low-effort, trivial, or casual posts are rejected automatically, keeping the feed clean and meaningful.
+- **Agree & Support** — Users can support claims they believe are true, strengthening their credibility score.
+- **Disagree & Challenge** — Users can dispute claims they believe are false, as long as they back it up with supporting proof.
+- **Score-Based Publishing** — A post only goes live if it meets the required verification threshold, ensuring quality at the source.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## How It Works
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+1. **Submit a Claim** — A user posts something they believe to be true.
+2. **AI Verification** — The claim is processed and scored by an AI engine powered by [Tapestry](https://www.usetapestry.dev), which evaluates its credibility and substance.
+3. **Score Threshold** — If the claim meets the required score, it gets published. If not (e.g. a trivial "gm" message), it gets rejected.
+4. **Community Engagement** — Other users can agree with supporting evidence or disagree with counter-proof, dynamically affecting the claim's standing on the platform.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+---
+
+## 📦 Getting Started
+
+### Prerequisites
+
+- Node.js v18+
+- npm or yarn
+- API access to [Tapestry](https://www.usetapestry.dev)
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/your-username/optic.git
+
+# Navigate into the project
+cd optic
+
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp .env.example .env
+# Add your Tapestry API key and other config to .env
+
+# Start the development server
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## 🌐 Environment Variables
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```env
+TAPESTRY_API_KEY=your_tapestry_api_key
+# Add other required variables here
 ```
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please open an issue first to discuss what you'd like to change, then submit a pull request.
+
+---
+
+## 📄 License
+
+MIT © Optic
