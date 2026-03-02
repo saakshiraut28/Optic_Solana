@@ -1,6 +1,6 @@
 # Optic 
 
-A verification-first platform where every claim earns its place.
+***A verification-first platform where every claim earns its place.***
 
 > Check out the app at **[optic-solana.vercel.app](optic-solana.vercel.app)**
 
