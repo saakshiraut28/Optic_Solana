@@ -26,7 +26,6 @@ interface Notification {
   read?: boolean;
 }
 
-// Map notification type to icon + color
 const NotificationIcon = ({ type }: { type: Notification["type"] }) => {
   const config = {
     agree: {
@@ -111,19 +110,15 @@ const Notifications = () => {
   ];
 
   return (
-    <div className="flex w-screen min-h-screen bg-gray-50">
-      <div className="mx-auto flex">
-        {/* LEFT SIDEBAR */}
-        <LeftSidebar />
+    <div className="flex min-h-screen bg-gray-50">
+      <LeftSidebar />
 
-        {/* CENTER COLUMN */}
-        <main className="flex-1 w-[600px] border-x border-gray-200 bg-white min-h-screen">
-          {/* Header */}
+      <div className="flex flex-1 min-w-0 justify-center">
+        <main className="flex-1 min-w-0 max-w-2xl border-x border-gray-200 bg-white min-h-screen">
           <header className="sticky top-0 z-10 bg-white/90 backdrop-blur-sm border-b border-gray-200 px-4 py-3">
             <p className="font-bold text-xl">Notifications</p>
           </header>
 
-          {/* Not logged in */}
           {!user && (
             <div className="flex flex-col items-center justify-center py-24 text-center px-8 gap-4">
               <Bell size={40} className="text-gray-200" />
@@ -142,7 +137,6 @@ const Notifications = () => {
 
           {user && (
             <>
-              {/* Filter tabs */}
               <div className="flex gap-1 px-4 py-2 border-b border-gray-100 overflow-x-auto scrollbar-hide">
                 {filters.map((f) => (
                   <button
@@ -159,7 +153,6 @@ const Notifications = () => {
                 ))}
               </div>
 
-              {/* Loading skeleton */}
               {loading && (
                 <div className="space-y-4 p-4">
                   {[1, 2, 3, 4, 5].map((i) => (
@@ -177,14 +170,12 @@ const Notifications = () => {
                 </div>
               )}
 
-              {/* Error */}
               {error && (
                 <div className="p-6 text-center text-sm text-red-400">
                   {error}
                 </div>
               )}
 
-              {/* Empty state */}
               {!loading && !error && filtered.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-20 text-center px-8">
                   <Bell size={40} className="text-gray-200 mb-3" />
@@ -197,52 +188,51 @@ const Notifications = () => {
                 </div>
               )}
 
-              {/* Notifications list */}
-              {!loading &&
-                !error &&
-                filtered.map((notif) => (
-                  <div
-                    key={notif.id}
-                    className={`flex items-start gap-3 px-4 py-4 border-b border-gray-100 hover:bg-gray-50 transition ${
-                      !notif.read ? "bg-blue-50/30" : ""
-                    }`}
-                  >
-                    <NotificationIcon type={notif.type} />
+              <div className="pb-16 md:pb-0">
+                {!loading &&
+                  !error &&
+                  filtered.map((notif) => (
+                    <div
+                      key={notif.id}
+                      className={`flex items-start gap-3 px-4 py-4 border-b border-gray-100 hover:bg-gray-50 transition ${
+                        !notif.read ? "bg-blue-50/30" : ""
+                      }`}
+                    >
+                      <NotificationIcon type={notif.type} />
 
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-800 leading-snug">
-                        {notif.message}
-                      </p>
-                      {notif.metadata?.actorProfileId && (
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          @{notif.metadata.actorProfileId}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-gray-800 leading-snug">
+                          {notif.message}
                         </p>
-                      )}
-                      <p className="text-xs text-gray-300 mt-1">
-                        {new Date(notif.created_at).toLocaleDateString(
-                          "en-US",
-                          {
-                            month: "short",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          },
+                        {notif.metadata?.actorProfileId && (
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            @{notif.metadata.actorProfileId}
+                          </p>
                         )}
-                      </p>
-                    </div>
+                        <p className="text-xs text-gray-300 mt-1">
+                          {new Date(notif.created_at).toLocaleDateString(
+                            "en-US",
+                            {
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            },
+                          )}
+                        </p>
+                      </div>
 
-                    {/* Unread dot */}
-                    {!notif.read && (
-                      <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-1.5" />
-                    )}
-                  </div>
-                ))}
+                      {!notif.read && (
+                        <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-1.5" />
+                      )}
+                    </div>
+                  ))}
+              </div>
             </>
           )}
         </main>
 
-        {/* RIGHT SIDEBAR */}
-        <aside className="hidden lg:block w-80 p-6 space-y-4">
+        <aside className="hidden lg:block w-80 flex-shrink-0 p-6 space-y-4">
           <WhoToFollow
             currentProfileId={user?.id ?? null}
             onAuthRequired={() => setShowSignup(true)}

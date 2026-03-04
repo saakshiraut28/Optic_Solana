@@ -13,7 +13,6 @@ const Index = () => {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
 
-  // ── Composer state ──
   const [content, setContent] = useState("");
   const [proofUrl, setProofUrl] = useState("");
   const [proofMedia, setProofMedia] = useState("");
@@ -27,7 +26,7 @@ const Index = () => {
     score: number;
     reason: string;
   } | null>(null);
-  const [feedKey, setFeedKey] = useState(0); // increment to force feed refresh
+  const [feedKey, setFeedKey] = useState(0);
 
   const canPost = !!user && content.trim().length > 0;
 
@@ -35,7 +34,6 @@ const Index = () => {
     if (!canPost || posting || verifying) return;
     setPostError(null);
 
-    // ── Step 1: AI verification ──
     setVerifying(true);
     try {
       const verifyRes = await api.post("/verify", {
@@ -54,19 +52,17 @@ const Index = () => {
         setVerifying(false);
         return;
       }
-      // Approved — store result to show badge
       setVerifyResult({
         status: verifyRes.data.status,
         score: verifyRes.data.score,
         reason: verifyRes.data.reason,
       });
     } catch {
-      // If verification request itself fails, allow post through
+      // allow through if verify fails
     } finally {
       setVerifying(false);
     }
 
-    // ── Step 2: Submit post ──
     setPosting(true);
     try {
       const proofType = proofUrl
@@ -86,15 +82,12 @@ const Index = () => {
         ...(proofCitation && { proofCitation: proofCitation.trim() }),
       });
 
-      // Reset composer
       setContent("");
       setProofUrl("");
       setProofMedia("");
       setProofCitation("");
       setShowProofFields(false);
       setVerifyResult(null);
-
-      // Refresh the feed
       setFeedKey((k) => k + 1);
     } catch (err: any) {
       const msg =
@@ -108,19 +101,22 @@ const Index = () => {
   };
 
   return (
-    <div className="flex w-screen justify-centered min-h-screen bg-gray-50">
-      <div className="mx-20 mx-auto flex">
-        {/* LEFT SIDEBAR */}
-        <LeftSidebar />
+    <div className="flex min-h-screen bg-gray-50">
+      {/* LeftSidebar renders the desktop/tablet sidebar AND the mobile bottom nav */}
+      <LeftSidebar />
 
+      {/* Page body */}
+      <div className="flex flex-1 min-w-0 justify-center">
         {/* CENTER FEED */}
-        <main className="flex-1 w-xl border-r border-gray-200 bg-white">
-          {/* Feed Header */}
-          <div className="sticky top-0 flex justify-between items-center bg-white p-4 border-b border-gray-200 z-10">
+        <main className="flex-1 min-w-0 max-w-2xl border-x border-gray-200 bg-white">
+          {/* Header */}
+          <div className="sticky top-0 z-10 flex items-center justify-between bg-white px-4 py-3 border-b border-gray-200">
             <p className="text-xl font-black">Home</p>
             {user ? (
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-500">@{user.username}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-500 hidden sm:inline">
+                  @{user.username}
+                </span>
                 <button
                   onClick={logout}
                   className="text-sm text-gray-400 hover:text-black underline"
@@ -131,185 +127,176 @@ const Index = () => {
             ) : (
               <button
                 onClick={() => setShowSignup(true)}
-                className="bg-black text-white px-4 py-2 rounded-full hover:bg-gray-900 transition text-sm"
+                className="bg-black text-white px-4 py-1.5 rounded-full hover:bg-gray-900 transition text-sm"
               >
                 Sign up
               </button>
             )}
           </div>
 
-          {/* ── COMPOSER ── */}
-          <div className="p-4 border-b border-gray-200">
+          {/* COMPOSER */}
+          <div className="px-4 py-3 border-b border-gray-200">
             {!user ? (
-              // Logged out — prompt to sign in
               <div
                 onClick={() => setShowSignup(true)}
-                className="w-full text-gray-400 text-sm cursor-pointer py-2 hover:text-gray-600 transition"
+                className="text-gray-400 text-sm cursor-pointer py-2 hover:text-gray-600 transition"
               >
                 Sign in to post your take with proof...
               </div>
             ) : (
-              <>
-                <div className="flex gap-3">
-                  {/* Avatar */}
-                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 text-sm font-bold text-gray-500">
-                    {user.username?.[0]?.toUpperCase()}
-                  </div>
+              <div className="flex gap-3">
+                {/* Avatar */}
+                <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 text-sm font-bold text-gray-500">
+                  {user.username?.[0]?.toUpperCase()}
+                </div>
 
-                  {/* Text area */}
-                  <div className="flex-1">
-                    <textarea
-                      placeholder="What's your take? Back it up with proof."
-                      value={content}
-                      onChange={(e) => {
-                        setContent(e.target.value);
-                        setVerifyResult(null);
-                        setPostError(null);
-                      }}
-                      className="w-full resize-none border-none outline-none text-base placeholder-gray-400"
-                      rows={2}
-                    />
+                {/* Input area */}
+                <div className="flex-1 min-w-0">
+                  <textarea
+                    placeholder="What's your take? Back it up with proof."
+                    value={content}
+                    onChange={(e) => {
+                      setContent(e.target.value);
+                      setVerifyResult(null);
+                      setPostError(null);
+                    }}
+                    className="w-full resize-none border-none outline-none text-base placeholder-gray-400"
+                    rows={2}
+                  />
 
-                    {/* PROOF FIELDS — toggle */}
-                    {showProofFields && (
-                      <div className="mt-3 space-y-2 border-t border-gray-100 pt-3">
-                        {/* Proof URL */}
-                        <div className="flex items-center gap-2">
-                          <Link2
-                            size={14}
-                            className="text-blue-400 flex-shrink-0"
-                          />
-                          <input
-                            type="url"
-                            placeholder="Proof link (e.g. https://source.com)"
-                            value={proofUrl}
-                            onChange={(e) => setProofUrl(e.target.value)}
-                            className="flex-1 text-sm outline-none border-b border-gray-200 pb-1 focus:border-black transition"
-                          />
-                        </div>
-
-                        {/* Proof Media */}
-                        <div className="flex items-center gap-2">
-                          <Image
-                            size={14}
-                            className="text-green-400 flex-shrink-0"
-                          />
-                          <input
-                            type="url"
-                            placeholder="Image URL (e.g. https://cdn.com/image.jpg)"
-                            value={proofMedia}
-                            onChange={(e) => setProofMedia(e.target.value)}
-                            className="flex-1 text-sm outline-none border-b border-gray-200 pb-1 focus:border-black transition"
-                          />
-                        </div>
-
-                        {/* Proof Citation */}
-                        <div className="flex items-center gap-2">
-                          <BookOpen
-                            size={14}
-                            className="text-purple-400 flex-shrink-0"
-                          />
-                          <input
-                            type="text"
-                            placeholder="Citation (e.g. NASA Report, 2024)"
-                            value={proofCitation}
-                            onChange={(e) => setProofCitation(e.target.value)}
-                            className="flex-1 text-sm outline-none border-b border-gray-200 pb-1 focus:border-black transition"
-                          />
-                        </div>
+                  {/* Proof fields */}
+                  {showProofFields && (
+                    <div className="mt-3 space-y-2 border-t border-gray-100 pt-3">
+                      <div className="flex items-center gap-2">
+                        <Link2
+                          size={14}
+                          className="text-blue-400 flex-shrink-0"
+                        />
+                        <input
+                          type="url"
+                          placeholder="Proof link (e.g. https://source.com)"
+                          value={proofUrl}
+                          onChange={(e) => setProofUrl(e.target.value)}
+                          className="flex-1 min-w-0 text-sm outline-none border-b border-gray-200 pb-1 focus:border-black transition"
+                        />
                       </div>
-                    )}
-
-                    {/* Verification result */}
-                    {verifyResult && (
-                      <div
-                        className={`mt-3 p-3 rounded-xl text-xs border ${
-                          ["False", "Misleading", "Rejected"].includes(
-                            verifyResult.status,
-                          )
-                            ? "bg-red-50 border-red-200 text-red-700"
-                            : verifyResult.status === "Unverified"
-                              ? "bg-yellow-50 border-yellow-200 text-yellow-700"
-                              : "bg-green-50 border-green-200 text-green-700"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="font-semibold">
-                            {verifyResult.status}
-                          </span>
-                          <span className="font-bold">
-                            Score: {verifyResult.score}/100
-                          </span>
-                        </div>
-                        <p>{verifyResult.reason}</p>
+                      <div className="flex items-center gap-2">
+                        <Image
+                          size={14}
+                          className="text-green-400 flex-shrink-0"
+                        />
+                        <input
+                          type="url"
+                          placeholder="Image URL (e.g. https://cdn.com/image.jpg)"
+                          value={proofMedia}
+                          onChange={(e) => setProofMedia(e.target.value)}
+                          className="flex-1 min-w-0 text-sm outline-none border-b border-gray-200 pb-1 focus:border-black transition"
+                        />
                       </div>
-                    )}
+                      <div className="flex items-center gap-2">
+                        <BookOpen
+                          size={14}
+                          className="text-purple-400 flex-shrink-0"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Citation (e.g. NASA Report, 2024)"
+                          value={proofCitation}
+                          onChange={(e) => setProofCitation(e.target.value)}
+                          className="flex-1 min-w-0 text-sm outline-none border-b border-gray-200 pb-1 focus:border-black transition"
+                        />
+                      </div>
+                    </div>
+                  )}
 
-                    {/* Post error */}
-                    {postError && (
-                      <p className="mt-2 text-xs text-red-500">{postError}</p>
-                    )}
+                  {/* Verify result */}
+                  {verifyResult && (
+                    <div
+                      className={`mt-3 p-3 rounded-xl text-xs border ${
+                        ["False", "Misleading", "Rejected"].includes(
+                          verifyResult.status,
+                        )
+                          ? "bg-red-50 border-red-200 text-red-700"
+                          : verifyResult.status === "Unverified"
+                            ? "bg-yellow-50 border-yellow-200 text-yellow-700"
+                            : "bg-green-50 border-green-200 text-green-700"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-semibold">
+                          {verifyResult.status}
+                        </span>
+                        <span className="font-bold">
+                          Score: {verifyResult.score}/100
+                        </span>
+                      </div>
+                      <p>{verifyResult.reason}</p>
+                    </div>
+                  )}
 
-                    {/* Action row */}
-                    <div className="flex items-center justify-between mt-3">
-                      {/* Toggle proof fields */}
-                      <button
-                        onClick={() => setShowProofFields((p) => !p)}
-                        className="flex items-center gap-1 text-xs text-gray-400 hover:text-black transition"
-                      >
-                        {showProofFields ? (
-                          <ChevronUp size={14} />
-                        ) : (
-                          <ChevronDown size={14} />
-                        )}
-                        {showProofFields ? "Hide proof fields" : "Add proof"}
-                      </button>
+                  {postError && (
+                    <p className="mt-2 text-xs text-red-500">{postError}</p>
+                  )}
 
-                      {/* Char count + Post button */}
-                      <div className="flex items-center gap-3">
-                        {content.length > 0 && (
-                          <span
-                            className={`text-xs ${content.length > 280 ? "text-red-400" : "text-gray-300"}`}
-                          >
-                            {content.length}/280
-                          </span>
-                        )}
-                        <button
-                          onClick={handlePost}
-                          disabled={
-                            !canPost ||
-                            posting ||
-                            verifying ||
-                            content.length > 280
-                          }
-                          className="bg-black text-white px-4 py-1.5 rounded-full text-sm hover:bg-gray-900 transition disabled:opacity-40"
+                  {/* Action row */}
+                  <div className="flex items-center justify-between mt-3">
+                    <button
+                      onClick={() => setShowProofFields((p) => !p)}
+                      className="flex items-center gap-1 text-xs text-gray-400 hover:text-black transition"
+                    >
+                      {showProofFields ? (
+                        <ChevronUp size={14} />
+                      ) : (
+                        <ChevronDown size={14} />
+                      )}
+                      {showProofFields ? "Hide proof" : "Add proof"}
+                    </button>
+
+                    <div className="flex items-center gap-3">
+                      {content.length > 0 && (
+                        <span
+                          className={`text-xs ${content.length > 280 ? "text-red-400" : "text-gray-300"}`}
                         >
-                          {verifying
-                            ? "Checking..."
-                            : posting
-                              ? "Posting..."
-                              : "Post"}
-                        </button>
-                      </div>
+                          {content.length}/280
+                        </span>
+                      )}
+                      <button
+                        onClick={handlePost}
+                        disabled={
+                          !canPost ||
+                          posting ||
+                          verifying ||
+                          content.length > 280
+                        }
+                        className="bg-black text-white px-4 py-1.5 rounded-full text-sm hover:bg-gray-900 transition disabled:opacity-40"
+                      >
+                        {verifying
+                          ? "Checking..."
+                          : posting
+                            ? "Posting..."
+                            : "Post"}
+                      </button>
                     </div>
                   </div>
                 </div>
-              </>
+              </div>
             )}
           </div>
 
-          {/* FEED — key forces remount/refetch when new post is submitted */}
-          <Feed
-            key={feedKey}
-            currentProfileId={user?.id ?? null}
-            currentWalletAddress={user?.walletAddress ?? null}
-            onAuthRequired={() => setShowSignup(true)}
-            feedType="explore"
-          />
+          {/* Feed — pb-16 prevents content hiding behind mobile bottom nav */}
+          <div className="pb-16 md:pb-0">
+            <Feed
+              key={feedKey}
+              currentProfileId={user?.id ?? null}
+              currentWalletAddress={user?.walletAddress ?? null}
+              onAuthRequired={() => setShowSignup(true)}
+              feedType="explore"
+            />
+          </div>
         </main>
 
-        {/* RIGHT PANEL */}
-        <aside className="hidden lg:block w-80 p-6 space-y-6">
+        {/* RIGHT PANEL — desktop only */}
+        <aside className="hidden lg:block w-80 flex-shrink-0 p-6 space-y-6">
           <WhoToFollow
             currentProfileId={user?.id ?? null}
             onAuthRequired={() => setShowSignup(true)}
@@ -321,9 +308,9 @@ const Index = () => {
             <p className="text-sm text-gray-600 py-1">#Hackathon</p>
           </div>
         </aside>
-
-        <SignupModal isOpen={showSignup} onClose={() => setShowSignup(false)} />
       </div>
+
+      <SignupModal isOpen={showSignup} onClose={() => setShowSignup(false)} />
     </div>
   );
 };

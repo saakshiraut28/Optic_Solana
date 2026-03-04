@@ -28,7 +28,6 @@ const getPhantom = (): PhantomProvider | null => {
   return null;
 };
 
-// Uint8Array → base58 (no external dep needed in frontend)
 const toBase58 = (bytes: Uint8Array): string => {
   const ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
   const digits: number[] = [0];
@@ -75,7 +74,6 @@ const SignupModal = ({ isOpen, onClose }: SignupModalProps) => {
     reset();
   };
 
-  // ── Step 1: Connect Phantom ──
   const connectWallet = async () => {
     const phantom = getPhantom();
     if (!phantom) {
@@ -95,24 +93,18 @@ const SignupModal = ({ isOpen, onClose }: SignupModalProps) => {
     }
   };
 
-  // ── Step 2: Sign message → submit ──
   const handleSubmit = async () => {
     if (!connectedWallet) return;
     if (mode === "signup" && !username.trim()) {
       setError("Please enter a username.");
       return;
     }
-
     setLoading(true);
     setError(null);
     try {
       const phantom = getPhantom()!;
-
-      // Get nonce from server
       const { data: nonceData } = await api.get("/auth/nonce");
       const nonce: string = nonceData.nonce;
-
-      // Ask Phantom to sign it — user sees a popup
       const encoded = new TextEncoder().encode(nonce);
       const { signature } = await phantom.signMessage(encoded, "utf8");
       const sig58 = toBase58(signature);
@@ -168,11 +160,11 @@ const SignupModal = ({ isOpen, onClose }: SignupModalProps) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+      className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 z-50"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
-        className="relative w-full max-w-md bg-white rounded-2xl shadow-xl p-8"
+        className="relative w-full sm:max-w-md bg-white sm:rounded-2xl rounded-t-2xl shadow-xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto"
         role="dialog"
         aria-modal="true"
       >
@@ -183,7 +175,6 @@ const SignupModal = ({ isOpen, onClose }: SignupModalProps) => {
           <X size={18} />
         </button>
 
-        {/* ── SUCCESS ── */}
         {done ? (
           <div className="text-center space-y-4 py-4">
             <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto text-2xl">
@@ -202,7 +193,6 @@ const SignupModal = ({ isOpen, onClose }: SignupModalProps) => {
           </div>
         ) : (
           <>
-            {/* Header */}
             <div className="text-center mb-6">
               <p className="text-sm text-gray-400 uppercase tracking-wide mb-1">
                 {mode === "signup" ? "Get started" : "Welcome back"}
@@ -212,7 +202,6 @@ const SignupModal = ({ isOpen, onClose }: SignupModalProps) => {
               </h2>
             </div>
 
-            {/* Toggle */}
             <div className="flex bg-gray-100 rounded-xl p-1 mb-6">
               {(["signup", "signin"] as const).map((m) => (
                 <button
@@ -229,7 +218,6 @@ const SignupModal = ({ isOpen, onClose }: SignupModalProps) => {
               ))}
             </div>
 
-            {/* ── STEP 1: Connect wallet ── */}
             {step === "connect" && (
               <div className="space-y-4">
                 <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-600 space-y-2">
@@ -267,21 +255,18 @@ const SignupModal = ({ isOpen, onClose }: SignupModalProps) => {
               </div>
             )}
 
-            {/* ── STEP 2: Confirm + sign ── */}
             {step === "confirm" && connectedWallet && (
               <div className="space-y-4">
-                {/* Wallet connected badge */}
                 <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
-                  <div className="w-2 h-2 rounded-full bg-green-500" />
+                  <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
                   <span className="text-xs text-green-700 font-medium">
                     Wallet connected
                   </span>
-                  <span className="ml-auto text-xs text-gray-400 font-mono truncate max-w-[140px]">
+                  <span className="ml-auto text-xs text-gray-400 font-mono truncate max-w-[120px] sm:max-w-[140px]">
                     {connectedWallet.slice(0, 4)}...{connectedWallet.slice(-4)}
                   </span>
                 </div>
 
-                {/* Username field — signup only */}
                 {mode === "signup" && (
                   <div>
                     <label className="text-sm font-medium">
@@ -343,6 +328,6 @@ const SignupModal = ({ isOpen, onClose }: SignupModalProps) => {
       </div>
     </div>
   );
-};;
+};
 
 export default SignupModal;

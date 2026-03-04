@@ -70,7 +70,6 @@ const Profile = () => {
   const [followersList, setFollowersList] = useState<FollowProfile[]>([]);
   const [followListLoading, setFollowListLoading] = useState(false);
 
-  // Fetch profile
   useEffect(() => {
     if (!user?.id) {
       setLoading(false);
@@ -90,7 +89,6 @@ const Profile = () => {
           following: raw.socialCounts?.following ?? 0,
         });
       } catch {
-        /* silent */
       } finally {
         setLoading(false);
       }
@@ -98,7 +96,6 @@ const Profile = () => {
     load();
   }, [user?.id]);
 
-  // Fetch user posts
   useEffect(() => {
     if (!user?.id) {
       setPostsLoading(false);
@@ -110,7 +107,6 @@ const Profile = () => {
         const res = await api.get(`/posts/user/${user.id}`);
         setPosts(res.data.data ?? []);
       } catch {
-        /* silent */
       } finally {
         setPostsLoading(false);
       }
@@ -118,10 +114,8 @@ const Profile = () => {
     load();
   }, [user?.id]);
 
-  // Fetch following or followers list when tab changes
   useEffect(() => {
-    if (!user?.id) return;
-    if (activeTab === "posts") return;
+    if (!user?.id || activeTab === "posts") return;
     const load = async () => {
       setFollowListLoading(true);
       try {
@@ -141,7 +135,6 @@ const Profile = () => {
         if (activeTab === "following") setFollowingList(profiles);
         else setFollowersList(profiles);
       } catch {
-        /* silent */
       } finally {
         setFollowListLoading(false);
       }
@@ -149,7 +142,6 @@ const Profile = () => {
     load();
   }, [activeTab, user?.id]);
 
-  // Upload image to Imgbb and return the URL
   const uploadImage = async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append("image", file);
@@ -227,14 +219,11 @@ const Profile = () => {
     .toUpperCase();
 
   return (
-    <div className="flex w-screen min-h-screen bg-gray-50">
-      <div className="mx-auto flex">
-        {/* LEFT SIDEBAR */}
-        <LeftSidebar />
+    <div className="flex min-h-screen bg-gray-50">
+      <LeftSidebar />
 
-        {/* CENTER COLUMN */}
-        <main className="flex-1 w-[600px] border-x border-gray-200 bg-white min-h-screen">
-          {/* Sticky header */}
+      <div className="flex flex-1 min-w-0 justify-center">
+        <main className="flex-1 min-w-0 max-w-2xl border-x border-gray-200 bg-white min-h-screen">
           <header className="sticky top-0 z-10 bg-white/90 backdrop-blur-sm border-b border-gray-200 px-4 py-3 flex items-center gap-4">
             <Link
               to="/"
@@ -250,7 +239,6 @@ const Profile = () => {
             </div>
           </header>
 
-          {/* Not logged in */}
           {!user && !loading && (
             <div className="flex flex-col items-center justify-center py-24 text-center px-8 gap-4">
               <p className="text-gray-500 text-sm">
@@ -265,11 +253,9 @@ const Profile = () => {
             </div>
           )}
 
-          {/* Profile content */}
           {user && (
             <>
-              {/* BANNER */}
-              <div className="h-40 bg-gradient-to-br from-gray-900 via-gray-800 to-black relative">
+              <div className="h-32 sm:h-40 bg-gradient-to-br from-gray-900 via-gray-800 to-black relative">
                 <button
                   onClick={openEdit}
                   className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 bg-black/50 hover:bg-black/80 text-white text-xs rounded-full backdrop-blur-sm border border-white/20 transition"
@@ -279,9 +265,11 @@ const Profile = () => {
                 </button>
               </div>
 
-              {/* AVATAR ROW */}
-              <div className="px-4 -mt-12 mb-1 relative z-10">
-                <div className="w-20 h-20 rounded-full border-4 border-white overflow-hidden bg-gray-100 flex items-center justify-center shadow-sm">
+              <div className="px-4 -mt-10 mb-1 relative z-10">
+                <div
+                  className="w-18 h-18 sm:w-20 sm:h-20 rounded-full border-4 border-white overflow-hidden bg-gray-100 flex items-center justify-center shadow-sm"
+                  style={{ width: 72, height: 72 }}
+                >
                   {loading ? (
                     <div className="w-full h-full bg-gray-200 animate-pulse" />
                   ) : profile?.image ? (
@@ -298,7 +286,6 @@ const Profile = () => {
                 </div>
               </div>
 
-              {/* PROFILE INFO */}
               <div className="px-4 pb-3">
                 {loading ? (
                   <div className="space-y-2 animate-pulse mt-2">
@@ -337,13 +324,15 @@ const Profile = () => {
                           Joined{" "}
                           {new Date(profile.created_at).toLocaleDateString(
                             "en-US",
-                            { month: "long", year: "numeric" },
+                            {
+                              month: "long",
+                              year: "numeric",
+                            },
                           )}
                         </span>
                       )}
                     </div>
 
-                    {/* FOLLOW COUNTS — plain text, tabs below handle navigation */}
                     <div className="flex gap-5 mt-3">
                       <span className="text-sm">
                         <span className="font-bold">
@@ -362,7 +351,6 @@ const Profile = () => {
                 )}
               </div>
 
-              {/* TABS */}
               <div className="flex border-b border-gray-200">
                 {(["posts", "followers", "following"] as const).map((tab) => (
                   <button
@@ -388,141 +376,144 @@ const Profile = () => {
                 ))}
               </div>
 
-              {/* ── POSTS TAB ── */}
-              {activeTab === "posts" &&
-                (postsLoading ? (
-                  <div className="space-y-4 p-4">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="animate-pulse space-y-2">
-                        <div className="h-4 bg-gray-100 rounded w-3/4" />
-                        <div className="h-3 bg-gray-50 rounded w-1/2" />
-                      </div>
-                    ))}
-                  </div>
-                ) : posts.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-center px-8">
-                    <Grid3X3 size={36} className="text-gray-200 mb-3" />
-                    <p className="font-bold text-lg">No posts yet</p>
-                    <p className="text-gray-400 text-sm mt-1">
-                      When you post something, it'll show up here.
-                    </p>
-                  </div>
-                ) : (
-                  posts.map((post) => (
-                    <div
-                      key={post.content.id}
-                      className="px-4 py-4 border-b border-gray-100 hover:bg-gray-50 transition"
-                    >
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-bold text-sm">
-                          {post.authorProfile.username}
-                        </span>
-                        <span className="text-gray-400 text-sm">
-                          @{post.authorProfile.id}
-                        </span>
-                        <span className="text-gray-300 text-xs ml-auto">
-                          {new Date(post.content.created_at).toLocaleDateString(
-                            "en-US",
-                            { month: "short", day: "numeric" },
-                          )}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-900 leading-relaxed">
-                        {post.content.text ?? "—"}
-                      </p>
-                      {post.content.proofUrl && (
-                        <a
-                          href={post.content.proofUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-1.5 inline-flex items-center gap-1 text-xs text-blue-500 hover:underline"
-                        >
-                          <LinkIcon size={11} /> View Proof
-                        </a>
-                      )}
-                      <div className="flex gap-4 mt-2">
-                        <span className="text-xs text-gray-400">
-                          👍 {post.socialCounts.likeCount}
-                        </span>
-                        <span className="text-xs text-gray-400">
-                          👎 {post.socialCounts.commentCount}
-                        </span>
-                      </div>
+              <div className="pb-16 md:pb-0">
+                {activeTab === "posts" &&
+                  (postsLoading ? (
+                    <div className="space-y-4 p-4">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="animate-pulse space-y-2">
+                          <div className="h-4 bg-gray-100 rounded w-3/4" />
+                          <div className="h-3 bg-gray-50 rounded w-1/2" />
+                        </div>
+                      ))}
                     </div>
-                  ))
-                ))}
-
-              {/* ── FOLLOWING / FOLLOWERS TAB ── */}
-              {(activeTab === "following" || activeTab === "followers") &&
-                (followListLoading ? (
-                  <div className="space-y-3 p-4">
-                    {[1, 2, 3, 4].map((i) => (
+                  ) : posts.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-16 text-center px-8">
+                      <Grid3X3 size={36} className="text-gray-200 mb-3" />
+                      <p className="font-bold text-lg">No posts yet</p>
+                      <p className="text-gray-400 text-sm mt-1">
+                        When you post something, it'll show up here.
+                      </p>
+                    </div>
+                  ) : (
+                    posts.map((post) => (
                       <div
-                        key={i}
-                        className="animate-pulse flex items-center gap-3"
+                        key={post.content.id}
+                        className="px-4 py-4 border-b border-gray-100 hover:bg-gray-50 transition"
                       >
-                        <div className="w-10 h-10 rounded-full bg-gray-200" />
-                        <div className="flex-1 space-y-1">
-                          <div className="h-3 bg-gray-200 rounded w-1/3" />
-                          <div className="h-2 bg-gray-100 rounded w-1/4" />
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-bold text-sm">
+                            {post.authorProfile.username}
+                          </span>
+                          <span className="text-gray-400 text-sm hidden sm:inline">
+                            @{post.authorProfile.id}
+                          </span>
+                          <span className="text-gray-300 text-xs ml-auto flex-shrink-0">
+                            {new Date(
+                              post.content.created_at,
+                            ).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                            })}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-900 leading-relaxed">
+                          {post.content.text ?? "—"}
+                        </p>
+                        {post.content.proofUrl && (
+                          <a
+                            href={post.content.proofUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-1.5 inline-flex items-center gap-1 text-xs text-blue-500 hover:underline"
+                          >
+                            <LinkIcon size={11} /> View Proof
+                          </a>
+                        )}
+                        <div className="flex gap-4 mt-2">
+                          <span className="text-xs text-gray-400">
+                            👍 {post.socialCounts.likeCount}
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            👎 {post.socialCounts.commentCount}
+                          </span>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                ) : (activeTab === "following" ? followingList : followersList)
-                    .length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-center px-8">
-                    <p className="font-bold text-lg">
-                      {activeTab === "following"
-                        ? "Not following anyone yet"
-                        : "No followers yet"}
-                    </p>
-                    <p className="text-gray-400 text-sm mt-1">
-                      {activeTab === "following"
-                        ? "When you follow someone, they'll appear here."
-                        : "When someone follows you, they'll appear here."}
-                    </p>
-                  </div>
-                ) : (
-                  (activeTab === "following"
-                    ? followingList
-                    : followersList
-                  ).map((p) => (
-                    <div
-                      key={p.id}
-                      className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center flex-shrink-0">
-                        {p.image ? (
-                          <img
-                            src={p.image}
-                            alt={p.username}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-sm font-bold text-gray-500">
-                            {p.username?.[0]?.toUpperCase()}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm">{p.username}</p>
-                        <p className="text-xs text-gray-400">@{p.id}</p>
-                        {p.bio && (
-                          <p className="text-xs text-gray-500 truncate mt-0.5">
-                            {p.bio}
-                          </p>
-                        )}
-                      </div>
+                    ))
+                  ))}
+
+                {(activeTab === "following" || activeTab === "followers") &&
+                  (followListLoading ? (
+                    <div className="space-y-3 p-4">
+                      {[1, 2, 3, 4].map((i) => (
+                        <div
+                          key={i}
+                          className="animate-pulse flex items-center gap-3"
+                        >
+                          <div className="w-10 h-10 rounded-full bg-gray-200" />
+                          <div className="flex-1 space-y-1">
+                            <div className="h-3 bg-gray-200 rounded w-1/3" />
+                            <div className="h-2 bg-gray-100 rounded w-1/4" />
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))
-                ))}
+                  ) : (activeTab === "following"
+                      ? followingList
+                      : followersList
+                    ).length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-16 text-center px-8">
+                      <p className="font-bold text-lg">
+                        {activeTab === "following"
+                          ? "Not following anyone yet"
+                          : "No followers yet"}
+                      </p>
+                      <p className="text-gray-400 text-sm mt-1">
+                        {activeTab === "following"
+                          ? "When you follow someone, they'll appear here."
+                          : "When someone follows you, they'll appear here."}
+                      </p>
+                    </div>
+                  ) : (
+                    (activeTab === "following"
+                      ? followingList
+                      : followersList
+                    ).map((p) => (
+                      <div
+                        key={p.id}
+                        className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center flex-shrink-0">
+                          {p.image ? (
+                            <img
+                              src={p.image}
+                              alt={p.username}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-sm font-bold text-gray-500">
+                              {p.username?.[0]?.toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm">{p.username}</p>
+                          <p className="text-xs text-gray-400">@{p.id}</p>
+                          {p.bio && (
+                            <p className="text-xs text-gray-500 truncate mt-0.5">
+                              {p.bio}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  ))}
+              </div>
             </>
           )}
         </main>
 
-        {/* RIGHT SIDEBAR */}
-        <aside className="hidden lg:block w-80 p-6 space-y-4">
+        <aside className="hidden lg:block w-80 flex-shrink-0 p-6 space-y-4">
           <WhoToFollow
             currentProfileId={user?.id ?? null}
             onAuthRequired={() => setShowSignup(true)}
@@ -536,7 +527,6 @@ const Profile = () => {
         </aside>
       </div>
 
-      {/* EDIT MODAL */}
       {editing && (
         <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
@@ -560,10 +550,8 @@ const Profile = () => {
               </button>
             </div>
 
-            {/* Banner + avatar preview */}
             <div className="h-24 bg-gradient-to-br from-gray-900 via-gray-800 to-black" />
             <div className="px-4 -mt-8 mb-4">
-              {/* Clickable avatar — opens file picker */}
               <label className="relative w-16 h-16 rounded-full border-4 border-white overflow-hidden bg-gray-200 flex items-center justify-center cursor-pointer group">
                 {draft.profileImage ? (
                   <img
@@ -576,7 +564,6 @@ const Profile = () => {
                     {initials}
                   </span>
                 )}
-                {/* Hover overlay */}
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition rounded-full">
                   {imgUploading ? (
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -634,6 +621,6 @@ const Profile = () => {
       <SignupModal isOpen={showSignup} onClose={() => setShowSignup(false)} />
     </div>
   );
-};;;;
+};
 
 export default Profile;

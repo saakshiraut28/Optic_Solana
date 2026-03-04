@@ -41,7 +41,6 @@ const Explore = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Fetch explore posts on mount
   useEffect(() => {
     const load = async () => {
       setPostsLoading(true);
@@ -61,7 +60,6 @@ const Explore = () => {
     load();
   }, []);
 
-  // Load more posts
   const loadMore = async () => {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
@@ -81,7 +79,6 @@ const Explore = () => {
     }
   };
 
-  // Debounced search
   const handleSearch = (val: string) => {
     setQuery(val);
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -118,14 +115,12 @@ const Explore = () => {
   };
 
   return (
-    <div className="flex w-screen min-h-screen bg-gray-50">
-      <div className="mx-auto flex">
-        {/* LEFT SIDEBAR */}
-        <LeftSidebar />
+    <div className="flex min-h-screen bg-gray-50">
+      {/* LeftSidebar handles sidebar on md+ and bottom nav on mobile */}
+      <LeftSidebar />
 
-        {/* CENTER COLUMN */}
-        <main className="flex-1 w-[600px] border-x border-gray-200 bg-white min-h-screen">
-          {/* Sticky search header */}
+      <div className="flex flex-1 min-w-0 justify-center">
+        <main className="flex-1 min-w-0 max-w-2xl border-x border-gray-200 bg-white min-h-screen">
           <header className="sticky top-0 z-10 bg-white/90 backdrop-blur-sm border-b border-gray-200 px-4 py-3">
             <div className="relative">
               <Search
@@ -150,7 +145,6 @@ const Explore = () => {
             </div>
           </header>
 
-          {/* SEARCH RESULTS */}
           {query && (
             <div className="border-b border-gray-200">
               {searching ? (
@@ -211,7 +205,6 @@ const Explore = () => {
             </div>
           )}
 
-          {/* SECTION TITLE */}
           {!query && (
             <div className="px-4 pt-4 pb-2">
               <p className="font-bold text-lg">Explore</p>
@@ -219,7 +212,6 @@ const Explore = () => {
             </div>
           )}
 
-          {/* ALL POSTS */}
           {postsLoading ? (
             <div className="space-y-4 p-4">
               {[1, 2, 3, 4].map((i) => (
@@ -237,13 +229,12 @@ const Explore = () => {
               ))}
             </div>
           ) : (
-            <>
+            <div className="pb-16 md:pb-0">
               {posts.map((post) => (
                 <div
                   key={post.content.id}
                   className="px-4 py-4 border-b border-gray-100 hover:bg-gray-50 transition"
                 >
-                  {/* Author row */}
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-9 h-9 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center flex-shrink-0">
                       {post.authorProfile.image ? (
@@ -258,28 +249,29 @@ const Explore = () => {
                         </span>
                       )}
                     </div>
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <span className="font-bold text-sm">
                         {post.authorProfile.username}
                       </span>
-                      <span className="text-gray-400 text-sm ml-1">
+                      <span className="text-gray-400 text-sm ml-1 hidden sm:inline">
                         @{post.authorProfile.id}
                       </span>
                     </div>
-                    <span className="ml-auto text-xs text-gray-300">
+                    <span className="text-xs text-gray-300 flex-shrink-0">
                       {new Date(post.content.created_at).toLocaleDateString(
                         "en-US",
-                        { month: "short", day: "numeric" },
+                        {
+                          month: "short",
+                          day: "numeric",
+                        },
                       )}
                     </span>
                   </div>
 
-                  {/* Content */}
                   <p className="text-sm text-gray-900 leading-relaxed">
                     {post.content.text ?? "—"}
                   </p>
 
-                  {/* Proof badge */}
                   {post.content.proofUrl && (
                     <a
                       href={post.content.proofUrl}
@@ -291,7 +283,6 @@ const Explore = () => {
                     </a>
                   )}
 
-                  {/* Counts */}
                   <div className="flex gap-4 mt-2">
                     <span className="text-xs text-gray-400">
                       👍 {post.socialCounts.likeCount}
@@ -303,7 +294,6 @@ const Explore = () => {
                 </div>
               ))}
 
-              {/* Load more */}
               {hasMore && (
                 <div className="p-4 text-center">
                   <button
@@ -315,12 +305,11 @@ const Explore = () => {
                   </button>
                 </div>
               )}
-            </>
+            </div>
           )}
         </main>
 
-        {/* RIGHT SIDEBAR */}
-        <aside className="hidden lg:block w-80 p-6 space-y-4">
+        <aside className="hidden lg:block w-80 flex-shrink-0 p-6 space-y-4">
           <WhoToFollow
             currentProfileId={user?.id ?? null}
             onAuthRequired={() => setShowSignup(true)}

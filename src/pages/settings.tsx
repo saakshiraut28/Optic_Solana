@@ -34,7 +34,7 @@ const Settings = () => {
         data: { profileId: user.id, walletAddress: user.walletAddress },
       });
     } catch {
-      alert("Something went wrong, could not delete the profile")
+      alert("Something went wrong, could not delete the profile");
     } finally {
       setIsDeleting(false);
     }
@@ -43,14 +43,11 @@ const Settings = () => {
   };
 
   return (
-    <div className="flex w-screen min-h-screen bg-gray-50">
-      <div className="mx-auto flex">
-        {/* LEFT SIDEBAR */}
-        <LeftSidebar />
+    <div className="flex min-h-screen bg-gray-50">
+      <LeftSidebar />
 
-        {/* CENTER COLUMN */}
-        <main className="flex-1 w-[600px] border-x border-gray-200 bg-white min-h-screen">
-          {/* Sticky header */}
+      <div className="flex flex-1 min-w-0 justify-center">
+        <main className="flex-1 min-w-0 max-w-2xl border-x border-gray-200 bg-white min-h-screen">
           <header className="sticky top-0 z-10 bg-white/90 backdrop-blur-sm border-b border-gray-200 px-4 py-3 flex items-center gap-4">
             <Link
               to="/"
@@ -58,16 +55,13 @@ const Settings = () => {
             >
               <ArrowLeft size={18} />
             </Link>
-            <div>
-              <p className="font-bold text-base leading-tight">Settings</p>
-            </div>
+            <p className="font-bold text-base leading-tight">Settings</p>
           </header>
 
-          {/* Not logged in */}
           {!user && (
             <div className="flex flex-col items-center justify-center py-24 text-center px-8 gap-4">
               <p className="text-gray-500 text-sm">
-                Sign in to check view the settings.
+                Sign in to view the settings.
               </p>
               <button
                 onClick={() => setShowSignup(true)}
@@ -78,79 +72,80 @@ const Settings = () => {
             </div>
           )}
 
-          {/* Settings content */}
           {user && (
-            <Card className="border-red-200 p-6 mx-5 my-5">
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <OctagonAlert
-                    color="#ea0404"
-                    className="h-5 w-5 mt-0.5 flex-shrink-0"
-                  />
-                  <div className="flex-1">
-                    <h3 className="font-semibold mb-1">Delete Account</h3>
-                    <p className="text-sm mb-4">
-                      We're sad to let you go! Once you delete your account,
-                      there's no going back. Please be certain before
-                      proceeding.
-                    </p>
-                    <ul className="text-sm space-y-1 ml-4 list-disc mb-4">
-                      <li>
-                        All your data will be permanently deleted, though you
-                        can create a new account later.
-                      </li>
-                      <li>This action cannot be undone</li>
-                      <li>You won't be able to access your account or data</li>
-                    </ul>
-                  </div>
-                </div>
-
-                {/* Delete Button with Confirmation Dialog */}
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <button className="flex-shrink-0 text-xs px-3 py-1 rounded-full border border-black hover:bg-red-600 hover:text-white text-black hover:border-red-700 transition disabled:opacity-40">
-                      Delete My Account
-                    </button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>
-                        Are you absolutely sure?
-                      </AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. Your account and all
-                        associated data will be permanently deleted from our
-                        servers.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <div className="py-4 px-4 bg-red-50 rounded-md border border-red-200">
-                      <p className="text-sm text-red-900">
-                        <strong>Warning:</strong> This will immediately delete
-                        all your data including your profile, settings, and any
-                        saved information.
+            <div className="pb-16 md:pb-0 p-4 sm:p-5">
+              <Card className="border-red-200 p-5">
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <OctagonAlert
+                      color="#ea0404"
+                      className="h-5 w-5 mt-0.5 flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold mb-1">Delete Account</h3>
+                      <p className="text-sm mb-4">
+                        We're sad to let you go! Once you delete your account,
+                        there's no going back. Please be certain before
+                        proceeding.
                       </p>
+                      <ul className="text-sm space-y-1 ml-4 list-disc mb-4">
+                        <li>
+                          All your data will be permanently deleted, though you
+                          can create a new account later.
+                        </li>
+                        <li>This action cannot be undone</li>
+                        <li>
+                          You won't be able to access your account or data
+                        </li>
+                      </ul>
                     </div>
-                    <div className="flex gap-3 justify-end">
-                      <AlertDialogCancel className="flex-shrink-0  w-16 py-1 px-4 font-medium text-xs rounded-full border border-black text-black hover:bg-black hover:text-white transition">
-                        Cancel
-                      </AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={handleDeleteAccount}
-                        disabled={isDeleting}
-                        className="flex-shrink-0 w-16 py-1 px-4 font-medium text-xs rounded-full border border-black text-black hover:bg-red-600 hover:text-white hover:border-red-500 transition"
-                      >
-                        {isDeleting ? "Deleting..." : "Confirm"}
-                      </AlertDialogAction>
-                    </div>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            </Card>
+                  </div>
+
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <button className="flex-shrink-0 text-xs px-3 py-1 rounded-full border border-black hover:bg-red-600 hover:text-white text-black hover:border-red-700 transition disabled:opacity-40">
+                        Delete My Account
+                      </button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="max-w-sm sm:max-w-md mx-4">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          Are you absolutely sure?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. Your account and all
+                          associated data will be permanently deleted from our
+                          servers.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <div className="py-4 px-4 bg-red-50 rounded-md border border-red-200">
+                        <p className="text-sm text-red-900">
+                          <strong>Warning:</strong> This will immediately delete
+                          all your data including your profile, settings, and
+                          any saved information.
+                        </p>
+                      </div>
+                      <div className="flex gap-3 justify-end">
+                        <AlertDialogCancel className="flex-shrink-0 w-16 py-1 px-4 font-medium text-xs rounded-full border border-black text-black hover:bg-black hover:text-white transition">
+                          Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleDeleteAccount}
+                          disabled={isDeleting}
+                          className="flex-shrink-0 w-16 py-1 px-4 font-medium text-xs rounded-full border border-black text-black hover:bg-red-600 hover:text-white hover:border-red-500 transition"
+                        >
+                          {isDeleting ? "Deleting..." : "Confirm"}
+                        </AlertDialogAction>
+                      </div>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </Card>
+            </div>
           )}
         </main>
 
-        {/* RIGHT SIDEBAR */}
-        <aside className="hidden lg:block w-80 p-6 space-y-4">
+        <aside className="hidden lg:block w-80 flex-shrink-0 p-6 space-y-4">
           <WhoToFollow
             currentProfileId={user?.id ?? null}
             onAuthRequired={() => setShowSignup(true)}
