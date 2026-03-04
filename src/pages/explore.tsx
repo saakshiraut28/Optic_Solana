@@ -119,8 +119,11 @@ const Explore = () => {
       {/* LeftSidebar handles sidebar on md+ and bottom nav on mobile */}
       <LeftSidebar />
 
-      <div className="flex flex-1 min-w-0 justify-center">
-        <main className="flex-1 min-w-0 max-w-2xl border-x border-gray-200 bg-white min-h-screen">
+      {/* Page body */}
+      <div className="flex flex-1 min-w-0">
+        {/* CENTER COLUMN */}
+        <main className="flex-1 min-w-0 border-x border-gray-200 bg-white min-h-screen">
+          {/* Sticky search header */}
           <header className="sticky top-0 z-10 bg-white/90 backdrop-blur-sm border-b border-gray-200 px-4 py-3">
             <div className="relative">
               <Search
@@ -145,6 +148,7 @@ const Explore = () => {
             </div>
           </header>
 
+          {/* SEARCH RESULTS */}
           {query && (
             <div className="border-b border-gray-200">
               {searching ? (
@@ -205,6 +209,7 @@ const Explore = () => {
             </div>
           )}
 
+          {/* SECTION TITLE */}
           {!query && (
             <div className="px-4 pt-4 pb-2">
               <p className="font-bold text-lg">Explore</p>
@@ -212,6 +217,7 @@ const Explore = () => {
             </div>
           )}
 
+          {/* ALL POSTS */}
           {postsLoading ? (
             <div className="space-y-4 p-4">
               {[1, 2, 3, 4].map((i) => (
@@ -229,12 +235,14 @@ const Explore = () => {
               ))}
             </div>
           ) : (
+            /* pb-16 keeps last post above mobile bottom nav */
             <div className="pb-16 md:pb-0">
               {posts.map((post) => (
                 <div
                   key={post.content.id}
                   className="px-4 py-4 border-b border-gray-100 hover:bg-gray-50 transition"
                 >
+                  {/* Author row */}
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-9 h-9 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center flex-shrink-0">
                       {post.authorProfile.image ? (
@@ -268,10 +276,12 @@ const Explore = () => {
                     </span>
                   </div>
 
+                  {/* Content */}
                   <p className="text-sm text-gray-900 leading-relaxed">
                     {post.content.text ?? "—"}
                   </p>
 
+                  {/* Proof badge */}
                   {post.content.proofUrl && (
                     <a
                       href={post.content.proofUrl}
@@ -283,6 +293,7 @@ const Explore = () => {
                     </a>
                   )}
 
+                  {/* Counts */}
                   <div className="flex gap-4 mt-2">
                     <span className="text-xs text-gray-400">
                       👍 {post.socialCounts.likeCount}
@@ -309,6 +320,7 @@ const Explore = () => {
           )}
         </main>
 
+        {/* RIGHT SIDEBAR — desktop only */}
         <aside className="hidden lg:block w-80 flex-shrink-0 p-6 space-y-4">
           <WhoToFollow
             currentProfileId={user?.id ?? null}

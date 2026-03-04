@@ -106,9 +106,9 @@ const Index = () => {
       <LeftSidebar />
 
       {/* Page body */}
-      <div className="flex flex-1 min-w-0 justify-center">
+      <div className="flex flex-1 min-w-0">
         {/* CENTER FEED */}
-        <main className="flex-1 min-w-0 max-w-2xl border-x border-gray-200 bg-white">
+        <main className="flex-1 min-w-0 border-x border-gray-200 bg-white">
           {/* Header */}
           <div className="sticky top-0 z-10 flex items-center justify-between bg-white px-4 py-3 border-b border-gray-200">
             <p className="text-xl font-black">Home</p>

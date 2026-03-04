@@ -222,8 +222,8 @@ const Profile = () => {
     <div className="flex min-h-screen bg-gray-50">
       <LeftSidebar />
 
-      <div className="flex flex-1 min-w-0 justify-center">
-        <main className="flex-1 min-w-0 max-w-2xl border-x border-gray-200 bg-white min-h-screen">
+      <div className="flex flex-1 min-w-0">
+        <main className="flex-1 min-w-0 border-x border-gray-200 bg-white min-h-screen">
           <header className="sticky top-0 z-10 bg-white/90 backdrop-blur-sm border-b border-gray-200 px-4 py-3 flex items-center gap-4">
             <Link
               to="/"
